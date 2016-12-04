@@ -1,0 +1,139 @@
+= CommitStrip Service
+Hugo Courtecuisse;
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 4
+:sectlinks:
+
+[introduction]
+= Introduction
+
+CommitStrip-service is a RESTful microservice for exposing strips' data from the CommitStrip.com website.
+
+[[overview-http-verbs]]
+== HTTP verbs
+CommitStrip-service tries to adhere as closely as possible to standard HTTP and REST conventions in its
+use of HTTP verbs.
+|===
+| Verb | Usage
+
+| `GET`
+| Used to retrieve a resource
+
+|===
+
+[[overview-http-status-codes]]
+== HTTP status codes
+CommitStrip-service tries to adhere as closely as possible to standard HTTP and REST conventions in its
+use of HTTP status codes.
+
+|===
+| Status code | Usage
+
+| `200 OK`
+| Standard response for successful HTTP requests.
+
+| `400 Bad Request`
+| The server cannot or will not process the request due to something that is perceived to be a client error (e.g., malformed request syntax, invalid request message framing, or deceptive request routing).
+
+| `404 Not Found`
+| The requested resource could not be found but may be available again in the future. Subsequent requests by the client are permissible.
+|===
+
+[[resources]]
+= Resources
+
+[[find-all-strips]]
+=== Listing strips (`/strip/`)
+You can use the page parameter (p) for specifying the page that you want.
+To have your results sorted on a particular property, add a sort URL parameter with the name of the property you want to sort the results on. You can control the direction of the sort by specifying a URL parameter composed of the property name plus .dir and setting that value to either asc ordesc.
+
+=== Response structure
+
+|===
+|Path |Type |Description
+
+| id | Long | The strips' id
+| title | String | The strips' title
+| date  | Timestamp | The timestamp of the published date of the strips
+| thumbnail | String | The strips' url where the thumbnail is located
+| content | String | The strips' url where the image is located
+| url | String |The page strips' url on CommitStrip website
+| next | Long | next strip in chronological order. That means that the next strip, will be more recent than the current one.
+| previous | Long | previous strip in chronological order. That means that the previous strip, will be published after the current one.
+
+|===
+
+==== Example request
+
+include::{snippets}/find-all-strips/curl-request.adoc[]
+
+==== Example response
+
+include::{snippets}/find-all-strips/http-response.adoc[]
+
+==== Example request with sorted option
+
+include::{snippets}/find-all-strips-sorted/curl-request.adoc[]
+
+==== Example response with sorted option
+
+include::{snippets}/find-all-strips-sorted/http-response.adoc[]
+
+[[find-one-strip]]
+=== Find one strip (`/strip/{idStrip}`)
+With a `GET` request on `/strip/{idStrip}`, you can request one strip in particular.
+
+=== Response structure
+
+|===
+|Path |Type |Description
+
+| id | Long | The strips' id
+| title | String | The strips' title
+| date  | Timestamp | The timestamp of the published date of the strips
+| thumbnail | String | The strips' url where the thumbnail is located
+| content | String | The strips' url where the image is located
+| url | String |The page strips' url on CommitStrip website
+| next | Long | next strip in chronological order. That means that the next strip, will be more recent than the current one.
+| previous | Long | previous strip in chronological order. That means that the previous strip, will be published after the current one.
+
+|===
+
+==== Example request
+
+include::{snippets}/find-one-strip/curl-request.adoc[]
+
+==== Example response
+
+include::{snippets}/find-one-strip/http-response.adoc[]
+
+[[find-most-recent-strip]]
+=== Find most recent strip (`/strip/recent`)
+With a `GET` request on `/strip/recent`, you can request the most recent strip.
+
+=== Response structure
+
+|===
+|Path |Type |Description
+
+| id | Long | The strips' id
+| title | String | The strips' title
+| date  | Timestamp | The timestamp of the published date of the strips
+| thumbnail | String | The strips' url where the thumbnail is located
+| content | String | The strips' url where the image is located
+| url | String |The page strips' url on CommitStrip website
+| next | Long | next strip in chronological order. That means that the next strip, will be more recent than the current one.
+| previous | Long | previous strip in chronological order. That means that the previous strip, will be published after the current one.
+
+|===
+
+==== Example request
+
+include::{snippets}/find-most-recent-strip/curl-request.adoc[]
+
+==== Example response
+
+include::{snippets}/find-most-recent-strip/http-response.adoc[]

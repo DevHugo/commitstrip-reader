@@ -1,0 +1,205 @@
+apply plugin: 'com.android.application'
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            url  "http://dl.bintray.com/android/android-tools"
+        }
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:2.3.0-alpha1'
+        classpath 'me.tatarka:gradle-retrolambda:3.2.0'
+        classpath 'com.google.gms:google-services:3.0.0'
+    }
+}
+
+apply plugin: 'com.android.application'
+apply plugin: 'me.tatarka.retrolambda'
+apply plugin: 'com.google.gms.google-services'
+
+ext {
+    daggerVersion = "2.6.1"
+    retrofitVersion = "2.0.2"
+    gsonVersion = "2.0.1"
+    androidSdkVersionLong = "25.0.1"
+    firebaseVersion = "10.0.1"
+}
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion "${androidSdkVersionLong}"
+
+    sourceSets {
+        String sharedTestDir = 'src/sharedTest/java'
+        test {
+            java.srcDir sharedTestDir
+        }
+        androidTest {
+            java.srcDir sharedTestDir
+        }
+    }
+
+    dexOptions {
+        javaMaxHeapSize "4g"
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+    defaultConfig {
+        applicationId "com.commitstrip.commitstripreader"
+        minSdkVersion 21
+        targetSdkVersion 25
+        versionCode 1
+        versionName "1.0"
+        multiDexEnabled true
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    packagingOptions {
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/INDEX.LIST'
+        exclude 'META-INF/notice'
+        exclude 'META-INF/notice.txt'
+        exclude 'META-INF/license'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/rxjava.properties'
+        exclude 'cglib-license.txt'
+        exclude 'asm-license.txt'
+        exclude 'org/mockito/internal/matchers/apachecommons/commons-lang-license.txt'
+        exclude 'org/mockito/internal/creation/jmock/jmock-license.txt'
+        exclude 'mockito-extensions/org.mockito.plugins.MockMaker'
+        exclude 'mockito-extensions/org.mockito.plugins.StackTraceCleanerProvider'
+    }
+}
+
+repositories {
+    maven { url "https://jitpack.io" }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+
+    annotationProcessor "com.google.dagger:dagger-compiler:${daggerVersion}"
+    androidTestAnnotationProcessor "com.google.dagger:dagger-compiler:${daggerVersion}"
+
+    // Dagger 2: a fast dependency injector for Android and Java
+    compile "com.google.dagger:dagger:${daggerVersion}"
+    androidTestAnnotationProcessor "com.google.dagger:dagger:${daggerVersion}"
+    compile 'javax.annotation:jsr250-api:1.0'
+    compile 'javax.inject:javax.inject:1'
+
+    // Retrofit: A type-safe HTTP client for Android and Java
+    compile "com.squareup.retrofit2:retrofit:${retrofitVersion}"
+    compile "com.squareup.retrofit2:converter-gson:${gsonVersion}"
+    compile ("com.squareup.retrofit2:adapter-rxjava:2.1.0") {
+        exclude group: "io.reactivex.rxjava2", module: "rxjava"
+    }
+    compile ("com.jakewharton.retrofit:retrofit2-rxjava2-adapter:1.0.0") {
+        exclude group: "io.reactivex.rxjava2", module: "rxjava"
+    }
+
+    // Image downloading and caching library
+    compile 'com.squareup.picasso:picasso:2.5.2'
+
+    // OkHttp: An HTTP & HTTP/2 client for Android and Java applications
+    compile "com.squareup.okhttp3:okhttp:3.4.2"
+    compile 'com.squareup.okhttp3:logging-interceptor:3.4.1'
+    compile "com.squareup.okio:okio:1.11.0"
+
+    // Gson: A Java serialization/deserialization library that can convert Java Objects into JSON and back.
+    compile 'com.google.code.gson:gson:2.7'
+
+    // RxJava: a library for composing asynchronous and event-based programs using observable sequences
+    compile 'io.reactivex.rxjava2:rxjava:2.0.0-RC5'
+    compile ('io.reactivex.rxjava2:rxandroid:2.0.0-RC1') {
+        exclude group: "io.reactivex", module: "rxjava"
+    }
+
+    // ORM for local database
+    compile 'io.requery:requery:1.0.1'
+    compile 'io.requery:requery-android:1.0.1'
+    annotationProcessor 'io.requery:requery-processor:1.0.0'
+
+    // Android support library
+    compile "com.android.support:appcompat-v7:${androidSdkVersionLong}"
+    compile "com.android.support:design:${androidSdkVersionLong}"
+    compile "com.android.support:support-v4:${androidSdkVersionLong}"
+    compile "com.android.support:recyclerview-v7:${androidSdkVersionLong}"
+    compile "com.android.support:cardview-v7:${androidSdkVersionLong}"
+
+    // A debug bridge for Android applications
+    debugCompile 'com.facebook.stetho:stetho:1.4.1'
+    debugCompile 'com.facebook.stetho:stetho-okhttp:1.4.1'
+
+    // A real time frames per second measuring library for Android
+    debugCompile "com.github.brianPlummer:tinydancer:0.1.0"
+    releaseCompile "com.github.brianPlummer:tinydancer-noop:0.1.0"
+    testCompile "com.github.brianPlummer:tinydancer-noop:0.1.0"
+
+    // Field and method binding for Android views
+    compile 'com.jakewharton:butterknife:8.4.0'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:8.4.0'
+
+    // ImageView for Android that supports zooming, by various touch gestures
+    compile 'com.github.chrisbanes:PhotoView:1.3.0'
+
+    // Firebase report crash library
+    compile "com.google.firebase:firebase-crash:${firebaseVersion}"
+
+    // Firebase notification
+    compile "com.google.firebase:firebase-core:${firebaseVersion}"
+    compile "com.google.firebase:firebase-messaging:${firebaseVersion}"
+
+    // Firebase JobDispatcher
+    compile 'com.firebase:firebase-jobdispatcher:0.5.0'
+
+    // A small database, just for testing
+    testCompile "com.h2database:h2:1.3.148"
+
+    testCompile "org.mockito:mockito-core:2.2.24"
+    androidTestCompile "org.mockito:mockito-core:2.2.24"
+
+    androidTestCompile ('com.squareup.okhttp3:mockwebserver:3.4.2') {
+        exclude group: "com.squareup.okhttp3", module: "okhttp"
+        exclude group: "com.squareup.okio", module: "okio"
+    }
+
+    androidTestCompile "com.h2database:h2:1.3.148"
+
+    // Android testing library
+    androidTestCompile "com.android.support:support-annotations:${androidSdkVersionLong}"
+    androidTestCompile 'com.android.support.test:runner:0.5'
+    androidTestCompile 'com.android.support.test:rules:0.5'
+
+    androidTestCompile "com.crittercism.dexmaker:dexmaker:1.4"
+    androidTestCompile "com.crittercism.dexmaker:dexmaker-mockito:1.4"
+    androidTestCompile "com.crittercism.dexmaker:dexmaker-dx:1.4"
+
+    // Guava: Utility classes, google's collections, io classes, and much much more
+    compile group: 'com.google.guava', name: 'guava', version: '19.0'
+
+    testCompile 'junit:junit:4.12'
+
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
+
+    compile project(':common')
+}
+
+apply plugin: 'com.google.gms.google-services'
