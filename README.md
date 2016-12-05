@@ -27,8 +27,8 @@ A small Android app for reading strip from commitstrip website.
 To build:
 
 ```
-$ git clone git@github.com:ReactiveX/RxJava.git
-$ cd RxJava/
+$ git clone https://github.com/DevHugo/commitstrip-reader.git
+$ cd commitstrip-reader/
 $ ./gradlew build
 ```
 
