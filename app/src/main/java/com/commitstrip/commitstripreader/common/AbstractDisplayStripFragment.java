@@ -1,11 +1,15 @@
 package com.commitstrip.commitstripreader.common;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.media.AudioManager;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -16,8 +20,10 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.commitstrip.commitstripreader.R;
+import com.commitstrip.commitstripreader.configuration.Configuration;
 import com.commitstrip.commitstripreader.dto.StripDto;
 import com.commitstrip.commitstripreader.strip.StripContract;
 import com.commitstrip.commitstripreader.strip.StripFragment;
@@ -200,7 +206,6 @@ public abstract class AbstractDisplayStripFragment extends Fragment implements A
             else
                 onSwipeRight();
 
-
             return true;
         }
         return false;
@@ -209,6 +214,37 @@ public abstract class AbstractDisplayStripFragment extends Fragment implements A
     public abstract void onSwipeLeft();
 
     public abstract void onSwipeRight();
+
+    @Override
+    public boolean onKeyVolumeUp(int keyCode, KeyEvent event) {
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
+
+        if (sharedPreferences.getBoolean(Configuration.SHAREDPREFERENCES_KEY_SHOULD_USE_VOLUME_KEY, false)) {
+            onSwipeLeft();
+
+            return true;
+        }
+        else {
+            return false;
+        }
+
+    }
+
+    @Override
+    public boolean onKeyVolumeDown(int keyCode, KeyEvent event) {
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
+
+        if (sharedPreferences.getBoolean(Configuration.SHAREDPREFERENCES_KEY_SHOULD_USE_VOLUME_KEY, false)) {
+            onSwipeRight();
+
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
 
     /**
      * Created by Edward Brey (http://stackoverflow.com/questions/4139288/android-how-to-handle-right-to-left-swipe-gestures)

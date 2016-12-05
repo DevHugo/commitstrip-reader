@@ -15,4 +15,8 @@
     <string name="no_fav_available">Vous n\'avez ajouté aucun strip en favori.</string>
     <string name="new_strips_published">Plusieurs nouveaux strip ont été publiés</string>
     <string name="error_fetch_strips">Une erreur s\'est produite lors de la récupération des strips</string>
+
+    <string name="pref_title_should_use_volume_key">Touches de volume pour naviguer</string>
+    <string name="pref_summary_should_use_volume_key">Utiliser les touches de volume pour naviguer entre les strips.</string>
+
 </resources>

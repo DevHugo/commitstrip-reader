@@ -1,5 +1,7 @@
 package com.commitstrip.commitstripreader.common;
 
+import android.view.KeyEvent;
+
 import com.commitstrip.commitstripreader.BasePresenter;
 import com.commitstrip.commitstripreader.BaseView;
 import com.commitstrip.commitstripreader.strip.StripContract;
@@ -19,6 +21,9 @@ public interface AbstractDisplayStripContract {
         void setAbstractPresenter(AbstractDisplayStripPresenter abstractDisplayStripPresenter);
 
         void displayError();
+
+        boolean onKeyVolumeUp(int keyCode, KeyEvent event);
+        boolean onKeyVolumeDown(int keyCode, KeyEvent event);
     }
 
     interface Presenter extends BasePresenter {

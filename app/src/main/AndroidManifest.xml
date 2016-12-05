@@ -25,6 +25,7 @@
         </activity>
         <activity android:name=".listfavorite.ListFavoriteActivity" />
         <activity android:name=".displayfavorite.DisplayFavoriteStripActivity" />
+        <activity android:name=".settings.SettingsActivity" />
         <service
             android:enabled="true"
             android:name=".service.SyncLocalDatabaseService"

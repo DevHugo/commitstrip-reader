@@ -13,6 +13,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
 import com.commitstrip.commitstripreader.listfavorite.ListFavoriteActivity;
+import com.commitstrip.commitstripreader.settings.SettingsActivity;
 import com.commitstrip.commitstripreader.strip.StripActivity;
 
 import butterknife.BindView;
@@ -88,6 +89,10 @@ public abstract class BaseActivity extends AppCompatActivity {
             case R.id.last:
                 Intent intentLast = new Intent(getApplicationContext(), StripActivity.class);
                 startActivity(intentLast);
+                break;
+            case R.id.settings:
+                Intent intentSettings = new Intent(getApplicationContext(), SettingsActivity.class);
+                startActivity(intentSettings);
                 break;
         }
 

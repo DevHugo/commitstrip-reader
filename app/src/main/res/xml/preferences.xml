@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="wrap_content"
+    android:layout_width="wrap_content">
+
+        <CheckBoxPreference
+            android:key="use_volume_key"
+            android:title="@string/pref_title_should_use_volume_key"
+            android:summary="@string/pref_summary_should_use_volume_key"
+            android:defaultValue="false" />
+
+</PreferenceScreen>
