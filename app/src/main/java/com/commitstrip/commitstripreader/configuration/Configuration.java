@@ -23,4 +23,6 @@ public class Configuration {
 
     public static String FILENAME_CACHE_SYNC_LOCAL_DATABASE = "lastSync.txt";
     public static String SHAREDPREFERENCES_KEY_SHOULD_USE_VOLUME_KEY = "use_volume_key";
+    public static String SHAREDPREFERENCES_KEY_SHOULD_RECEIVE_NOTIFICATION = "receive_notification";
+
 }

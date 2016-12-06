@@ -3,11 +3,14 @@ package com.commitstrip.commitstripreader.service;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import com.commitstrip.commitstripreader.R;
+import com.commitstrip.commitstripreader.configuration.Configuration;
 import com.commitstrip.commitstripreader.data.source.StripRepository;
 import com.commitstrip.commitstripreader.data.source.StripRepositorySingleton;
 import com.commitstrip.commitstripreader.dto.NotificationDataPayload;
@@ -40,6 +43,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
 
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
             Gson gson = new Gson();
             try {
                 // Parse the notification and send it to the user.
@@ -52,10 +57,14 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
                 List<SimpleStripDto> list = notificationData.getStrips();
 
-                if (list.size() == 1)
-                    sendNotification(list.get(0), getString(R.string.new_strip_published), list.get(0).getTitle());
-                else
-                    sendNotification(list.get(0), getString(R.string.new_strips_published), "");
+                if (sharedPreferences.getBoolean(Configuration.SHAREDPREFERENCES_KEY_SHOULD_RECEIVE_NOTIFICATION, true)) {
+
+                    if (list.size() == 1) {
+                        sendNotification(list.get(0), getString(R.string.new_strip_published), list.get(0).getTitle());
+                    } else {
+                        sendNotification(list.get(0), getString(R.string.new_strips_published), "");
+                    }
+                }
 
                 // Save new strips
                 //refreshLocalDatabase();
@@ -71,10 +80,10 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                     mainHandler.post(myRunnable);
                 }
 
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 Log.e(TAG, "Error during launch of the exception: ", e);
             }
+
         }
     }
 

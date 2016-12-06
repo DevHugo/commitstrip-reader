@@ -9,4 +9,9 @@
             android:summary="@string/pref_summary_should_use_volume_key"
             android:defaultValue="false" />
 
+        <CheckBoxPreference
+            android:key="receive_notification"
+            android:title="@string/pref_title_should_receive_notification"
+            android:summary="@string/pref_summary_should_receive_notification"
+            android:defaultValue="true" />
 </PreferenceScreen>

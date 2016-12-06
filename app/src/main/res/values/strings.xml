@@ -18,5 +18,7 @@
 
     <string name="pref_title_should_use_volume_key">Touches de volume pour naviguer</string>
     <string name="pref_summary_should_use_volume_key">Utiliser les touches de volume pour naviguer entre les strips.</string>
+    <string name="pref_title_should_receive_notification">Être notifié pour chaque strip publié</string>
+    <string name="pref_summary_should_receive_notification">Lors de la publication d\'un strip sur le site commitstrip.com, m\'avertir par une notification sur mon téléphone</string>
 
 </resources>
