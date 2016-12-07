@@ -111,8 +111,7 @@ public class ResumeSyncLocalDatabase {
 
         return resumeFromLastSync
                 .onErrorResumeNext(fetchFromBackend)
-                .first(new ArrayList<>())
-                .toFlowable()
+                .switchIfEmpty(fetchFromBackend)
                 .flatMap(new Function<List<StripDto>, Flowable<StripDto>>() {
                     @Override
                     public Flowable<StripDto> apply(List<StripDto> strips) throws Exception {

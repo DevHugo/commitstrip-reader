@@ -99,7 +99,7 @@ public class SyncLocalDatabaseService extends JobService {
             }
         };
 
-        flowableSyncDabatase.subscribe(onNext, onError, onComplete);
+        flowableSyncDabatase.blockingSubscribe(onNext, onError, onComplete);
         
         return true; // Answers the question: "Is there still work going on?"
     }
