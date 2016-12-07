@@ -37,17 +37,18 @@ public class StripServiceImpl implements StripService {
     private static final Logger log = LoggerFactory.getLogger(StripServiceImpl.class);
 
     @Autowired
-    public StripServiceImpl(StripDaoToStrip converterStrip, CommitStripRepository repositoryCommitStrip, DatabaseRepository repositoryDatabase) {
+    public StripServiceImpl(StripDaoToStrip converterStrip, CommitStripRepository repositoryCommitStrip, DatabaseRepository repositoryDatabase, Environment environment) {
         this.converterStrip = converterStrip;
         this.repositoryCommitStrip = repositoryCommitStrip;
         this.repositoryDatabase = repositoryDatabase;
+        this.environment = environment;
     }
 
     public Iterable<StripDto> fetchAllStripFromCommitStripAndStoreThem() throws IOException, ParseException {
 
         List<StripDto> toReturn = new ArrayList<>();
 
-        int numberPageToFetch = 5;
+        int numberPageToFetch = 4;
         if (isInProduction())
             numberPageToFetch = repositoryCommitStrip.fetchPageNumber();
 
@@ -97,14 +98,17 @@ public class StripServiceImpl implements StripService {
     private boolean isInProduction () {
         boolean isInProduction = false;
 
-        for (String profile : environment.getActiveProfiles()) {
+        if (environment != null) {
 
-            if (profile.compareTo("Prod") == 0 ||
-                    profile.compareTo("PROD") == 0 ||
-                    profile.compareTo("Production") == 0 ||
-                    profile.compareTo("PRODUCTION") == 0 ||
-                    profile.compareTo("prod") == 0)
-                isInProduction = true;
+            for (String profile : environment.getActiveProfiles()) {
+
+                if (profile.compareTo("Prod") == 0 ||
+                        profile.compareTo("PROD") == 0 ||
+                        profile.compareTo("Production") == 0 ||
+                        profile.compareTo("PRODUCTION") == 0 ||
+                        profile.compareTo("prod") == 0)
+                    isInProduction = true;
+            }
         }
 
         return isInProduction;

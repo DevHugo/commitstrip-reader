@@ -1,5 +1,6 @@
 package com.commitstrip.commitstripreader.backend;
 
+import com.commitstrip.commitstripreader.backend.config.Configuration;
 import com.commitstrip.commitstripreader.backend.service.StripService;
 
 import org.slf4j.Logger;
@@ -42,12 +43,14 @@ public class Application {
     public CommandLineRunner fetchAllStripFromCommitStripAndStoreThem (StripService service) {
         return (args) -> {
 
-            if (args != null && args.length > 0 && args[0].equals("shouldsave"))
-                log.info("Start saving data … ");
+            log.info("Start saving data … ");
 
-                service.fetchAllStripFromCommitStripAndStoreThem();
+            service.fetchAllStripFromCommitStripAndStoreThem();
 
-                log.info(" Ok");
+            log.info(" Ok");
+
+            Configuration.shouldStartToFetchNewStrip = true;
+
         };
     }
 

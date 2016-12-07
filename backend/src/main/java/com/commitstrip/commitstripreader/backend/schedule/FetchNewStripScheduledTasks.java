@@ -1,5 +1,6 @@
 package com.commitstrip.commitstripreader.backend.schedule;
 
+import com.commitstrip.commitstripreader.backend.config.Configuration;
 import com.commitstrip.commitstripreader.backend.config.SampleConfig;
 import com.commitstrip.commitstripreader.backend.converter.StripDaoToSimpleStripDto;
 import com.commitstrip.commitstripreader.backend.converter.StripDaoToStrip;
@@ -74,7 +75,7 @@ public class FetchNewStripScheduledTasks {
                }
             }
 
-            if (toSave.size() != 0) {
+            if (toSave.size() != 0 && Configuration.shouldStartToFetchNewStrip) {
                 // Sort by date
                 toSave.sort((o1, o2) -> (o1.getDate().getTime() > o2.getDate().getTime() ? -1 : 1));
 
@@ -120,7 +121,8 @@ public class FetchNewStripScheduledTasks {
                 Gson gson = new Gson();
                 json.append(gson.toJson(notificationDataPayload)).append("}");
 
-                postNotification(config.getNotificationUrl(), json.toString());
+                if (Configuration.shouldSentNotification)
+                    postNotification(config.getNotificationUrl(), json.toString());
             }
 
         } catch (IOException e) {
