@@ -56,7 +56,7 @@ public class FetchAllStripFromCommitStripAndStoreThemTest {
         Mockito.when(commitStripRepository.fetchPageNumber()).thenReturn(4);
         Mockito.when(commitStripRepository.fetchStripFromCommitStripOnPage(anyInt())).thenCallRealMethod();
 
-        classUnderTest = new StripServiceImpl(converter, commitStripRepository, databaseRepositoryMock);
+        classUnderTest = new StripServiceImpl(converter, commitStripRepository, databaseRepositoryMock, null);
         classUnderTest.fetchAllStripFromCommitStripAndStoreThem();
 
         Mockito.verify(databaseRepositoryMock, atLeast(3)).save((List<StripDao>) anyObject());

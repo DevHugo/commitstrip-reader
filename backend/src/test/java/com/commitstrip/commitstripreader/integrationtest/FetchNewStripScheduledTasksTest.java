@@ -1,5 +1,6 @@
 package com.commitstrip.commitstripreader.integrationtest;
 
+import com.commitstrip.commitstripreader.backend.config.Configuration;
 import com.commitstrip.commitstripreader.backend.config.SampleConfig;
 import com.commitstrip.commitstripreader.backend.converter.StripDaoToSimpleStripDto;
 import com.commitstrip.commitstripreader.backend.dao.StripDao;
@@ -41,6 +42,9 @@ public class FetchNewStripScheduledTasksTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
+
+        Configuration.shouldStartToFetchNewStrip = true;
+        Configuration.shouldSentNotification = false;
     }
 
     @Test
@@ -48,6 +52,7 @@ public class FetchNewStripScheduledTasksTest {
 
         List<StripDao> strips = new ArrayList<>();
             StripDao stripDao = new StripDao();
+            stripDao.setId(11L);
             stripDao.setTitle("Hello there !");
             stripDao.setContent("http://www.commitstrip.com/fr/2016/10/24/meanwhile-on-mars-11/");
             stripDao.setDate(new Date());

@@ -79,7 +79,7 @@ public class CommitStripRepositoryImpl implements CommitStripRepository {
         if (page == 1)
             id = page;
         else
-            id = (page-1) * 20;
+            id = ((page-1) * 20)+1;
 
         for (Element content_strips : all_strips) {
 
