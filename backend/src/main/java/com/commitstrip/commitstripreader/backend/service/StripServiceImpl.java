@@ -86,7 +86,7 @@ public class StripServiceImpl implements StripService {
 
     @Override
     public StripDto findMoreRecent() {
-        StripDao strip = repositoryDatabase.findFirst1ByOrderByDateDesc();
+        StripDao strip = repositoryDatabase.findFirst1ByOrderByDateAsc();
 
         if (strip != null) {
             return new StripDaoToStrip().convert(strip);

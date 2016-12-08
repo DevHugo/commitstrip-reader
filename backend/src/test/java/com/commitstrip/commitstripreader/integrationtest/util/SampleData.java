@@ -1,6 +1,7 @@
 package com.commitstrip.commitstripreader.integrationtest.util;
 
 import com.commitstrip.commitstripreader.backend.dao.StripDao;
+import com.commitstrip.commitstripreader.dto.StripDto;
 
 import java.text.DateFormat;
 import java.text.ParseException;

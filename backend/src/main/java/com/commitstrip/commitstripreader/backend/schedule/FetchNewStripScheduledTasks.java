@@ -86,7 +86,7 @@ public class FetchNewStripScheduledTasks {
                 Long biggestId = stripBiggestId.getId();
 
                 // We need to know the most recent strip id for the last previous field id
-                StripDao stripMostRecent = repositoryDatabase.findFirst1ByOrderByDateDesc();
+                StripDao stripMostRecent = repositoryDatabase.findFirst1ByOrderByDateAsc();
                 Long previous = stripMostRecent.getId();
 
                 for (int i=0; i<toSave.size(); i++) {

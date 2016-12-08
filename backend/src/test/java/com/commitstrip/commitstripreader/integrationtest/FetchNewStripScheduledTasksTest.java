@@ -66,7 +66,7 @@ public class FetchNewStripScheduledTasksTest {
 
         StripDao stubStripDao2 = new StripDao();
         stubStripDao2.setId(Long.valueOf(1));
-        Mockito.when(databaseRepositoryMock.findFirst1ByOrderByDateDesc()).thenReturn(stubStripDao2);
+        Mockito.when(databaseRepositoryMock.findFirst1ByOrderByDateAsc()).thenReturn(stubStripDao2);
 
         StripDaoToSimpleStripDto converter = new StripDaoToSimpleStripDto();
         SampleConfig config = new SampleConfig();
@@ -97,7 +97,7 @@ public class FetchNewStripScheduledTasksTest {
             stubStripDao2.setTitle("Hello there 2 !");
             stubStripDao2.setContent("http://www.commitstrip.com/fr/2016/10/24/meanwhile-on-mars-11/");
             stubStripDao2.setId(Long.valueOf(1));
-        Mockito.when(databaseRepositoryMock.findFirst1ByOrderByDateDesc()).thenReturn(stubStripDao2);
+        Mockito.when(databaseRepositoryMock.findFirst1ByOrderByDateAsc()).thenReturn(stubStripDao2);
 
         Mockito.when(databaseRepositoryMock.save((List<StripDao>) anyObject())).thenReturn(strips);
 
