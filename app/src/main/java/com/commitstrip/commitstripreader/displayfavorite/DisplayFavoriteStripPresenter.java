@@ -1,94 +1,102 @@
 package com.commitstrip.commitstripreader.displayfavorite;
 
-import android.util.Log;
 
-import com.commitstrip.commitstripreader.common.AbstractDisplayStripPresenter;
+import com.commitstrip.commitstripreader.common.displaystrip.DisplayStripAbstractPresenter;
+import com.commitstrip.commitstripreader.common.displaystrip.DisplayStripContract;
+import com.commitstrip.commitstripreader.common.displaystrip.DisplayStripPresenterModule;
+import com.commitstrip.commitstripreader.common.displaystrip.FetchStripType;
 import com.commitstrip.commitstripreader.data.source.StripRepository;
-import com.commitstrip.commitstripreader.data.source.local.StripDaoEntity;
 import com.commitstrip.commitstripreader.dto.StripDto;
-import com.commitstrip.commitstripreader.strip.StripPresenterModule;
-
-import java.util.NoSuchElementException;
+import com.commitstrip.commitstripreader.util.di.ActivityScoped;
+import com.commitstrip.commitstripreader.util.di.FragmentScoped;
 
 import javax.inject.Inject;
 
-import io.reactivex.Single;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.observers.DisposableSingleObserver;
 
 /**
- * Listens to user actions from the UI ({@link DisplayFavoriteStripFragment}), retrieves the data and updates the
+ * Listens to user actions from the UI ({@link DisplayFavoriteStripComponent}), retrieves the data and updates the
  * UI as required.
  * <p />
  * By marking the constructor with {@code @Inject}, Dagger injects the dependencies required to
  * create an instance of the StripPresenter (if it fails, it emits a compiler error).  It uses
- * {@link StripPresenterModule} to do so.
+ * {@link DisplayStripPresenterModule} to do so.
  * <p/>
  * Dagger generated code doesn't require public access to the constructor or class, and
  * therefore, to ensure the developer doesn't instantiate the class manually and bypasses Dagger,
  * it's good practice minimise the visibility of the class/constructor as much as possible.
  **/
-public class DisplayFavoriteStripPresenter extends AbstractDisplayStripPresenter {
-
-    private String TAG = "DisplayFavoriteStripPresenter";
-
-    private final StripRepository mStripRepository;
-    private final CompositeDisposable mSubscriptions;
+public class DisplayFavoriteStripPresenter extends DisplayStripAbstractPresenter {
 
     /**
      * Dagger strictly enforces that arguments not marked with {@code @Nullable} are not injected
      * with {@code @Nullable} values.
      *
-     * @param stripRepository
+     * @param stripId strip id
+     * @param stripRepository strip repository
      * @param stripView
      */
     @Inject
-    DisplayFavoriteStripPresenter(StripRepository stripRepository, DisplayFavoriteStripContract.View stripView) {
-        super(stripRepository, stripView);
-
-        mStripRepository = stripRepository;
-        mSubscriptions = new CompositeDisposable();
-
+    DisplayFavoriteStripPresenter(
+            FetchStripType fetchStripType,
+            Long stripId,
+            StripRepository stripRepository,
+            DisplayStripContract.View stripView) {
+        super(fetchStripType, stripId, stripRepository, stripView);
     }
 
     @Override
-    public Long askForNextIdStrip() {
-        Long nextId = null;
+    public void onSwipeLeft() {
 
         if (mCurrentStrip != null) {
 
-            StripDto nextStrip = null;
-            try {
-               nextStrip = mStripRepository.fetchNextFavoriteStrip(mCurrentStrip.getDate()).blockingGet();
-            }
-            catch (NoSuchElementException exception) {}
+            mSubscriptions.add(
+                    mStripRepository
+                            .fetchNextFavoriteStrip(mCurrentStrip.getReleaseDate())
+                            .subscribeWith(new DisposableSingleObserver<StripDto>() {
+                                @Override
+                                public void onSuccess(StripDto nextStrip) {
+                                    if (nextStrip != null) {
+                                        passToStrip (nextStrip.getNext());
+                                    }
+                                }
 
-            if (nextStrip != null) {
-                nextId = nextStrip.getId();
-            }
+                                @Override
+                                public void onError(Throwable e) {}
+                            }));
         }
-
-        return nextId;
     }
 
     @Override
-    public Long askForPreviousIdStrip() {
-        Long previousId = null;
+    public void onSwipeRight() {
+        mSubscriptions.add(
+                mStripRepository
+                        .fetchPreviousFavoriteStrip(mCurrentStrip.getReleaseDate())
+                        .subscribeWith(new DisposableSingleObserver<StripDto>() {
+                            @Override
+                            public void onSuccess(StripDto previousStrip) {
+                                if (previousStrip != null) {
+                                    passToStrip (previousStrip.getPrevious());
+                                }
+                            }
 
-        if (mCurrentStrip != null) {
+                            @Override
+                            public void onError(Throwable e) {}
+                        }));
+    }
 
-            StripDto previousStrip = null;
-            try {
-                previousStrip = mStripRepository.fetchPreviousFavoriteStrip(mCurrentStrip.getDate()).blockingGet();
-            }
-            catch (NoSuchElementException exception) {}
+    @Override
+    public void onStripDisplayed(StripDto strip) {}
 
-            if (previousStrip != null) {
-                previousId = previousStrip.getId();
-            }
-        }
+    @Override
+    public boolean fetchPriorityForUseVolumeKey() {
+        return mStripRepository.fetchPriorityForUseVolumeKey();
+    }
 
-        return previousId;
+    @Override
+    public boolean shouldUpdateNextStripOnFullScreen() {
+        return false;
     }
 
 }

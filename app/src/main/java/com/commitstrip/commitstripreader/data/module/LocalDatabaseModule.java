@@ -5,8 +5,6 @@ import android.content.Context;
 import com.commitstrip.commitstripreader.BuildConfig;
 import com.commitstrip.commitstripreader.data.source.local.Models;
 
-import javax.inject.Singleton;
-
 import dagger.Module;
 import dagger.Provides;
 import io.requery.Persistable;
@@ -21,7 +19,7 @@ import io.requery.sql.TableCreationMode;
  * This is a Dagger module. We use this to pass the local database instance to the repository.
  */
 @Module
-public final class LocalDatabaseModule {
+public class LocalDatabaseModule {
 
     private final Context mContext;
 
@@ -30,8 +28,10 @@ public final class LocalDatabaseModule {
     }
 
     @Provides
-    ReactiveEntityStore<Persistable> provideLocalDatabase() {
-        DatabaseSource source = new DatabaseSource(mContext, Models.DEFAULT, com.commitstrip.commitstripreader.configuration.Configuration.DATABASE_VERSION);
+    public ReactiveEntityStore<Persistable> provideLocalDatabase() {
+
+        DatabaseSource source = new DatabaseSource(mContext, Models.DEFAULT,
+                com.commitstrip.commitstripreader.configuration.Configuration.DATABASE_VERSION);
 
         if (BuildConfig.DEBUG) {
             // use this in development mode to drop and recreate the tables on every upgrade

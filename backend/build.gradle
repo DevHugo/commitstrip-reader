@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        springBootVersion = "2.0.0.BUILD-SNAPSHOT"
+        springBootVersion = "1.5.1.RELEASE"
         springRestDocsVersion = '1.0.0.RELEASE'
         gradleDockerVersion = "1.2"
     }
@@ -62,12 +62,12 @@ dependencies {
     compile "org.springframework.boot:spring-boot-starter-data-jpa"
     //compile "org.springframework.boot:spring-boot-starter-security"
     compile "org.springframework.boot:spring-boot-starter-batch"
-    compile "org.springframework.restdocs:spring-restdocs-mockmvc:${restDocs}"
-
-    compile 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    compile ("org.springframework.restdocs:spring-restdocs-mockmvc:${restDocs}") {
+        exclude group: "com.fasterxml.jackson.core"
+    }
 
     // In-memory database
-    compile "com.h2database:h2"
+    compile "mysql:mysql-connector-java"
 
     // An HTTP & HTTP/2 client for Android and Java applications
     compile "com.squareup.okhttp3:okhttp:${okHttpVersion}"

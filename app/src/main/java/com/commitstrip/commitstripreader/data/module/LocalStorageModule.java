@@ -3,13 +3,11 @@ package com.commitstrip.commitstripreader.data.module;
 import android.content.Context;
 import android.os.Environment;
 
-import com.commitstrip.commitstripreader.util.ExternalStorage;
-import com.commitstrip.commitstripreader.util.InternalStorage;
+import com.commitstrip.commitstripreader.util.di.CacheStorage;
+import com.commitstrip.commitstripreader.util.di.ExternalStorage;
+import com.commitstrip.commitstripreader.util.di.InternalStorage;
 
 import java.io.File;
-
-import javax.inject.Named;
-import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
@@ -22,8 +20,6 @@ import dagger.Provides;
 @Module
 public class LocalStorageModule {
 
-    private String TAG = "LocalStorageModule";
-
     private Context mContext;
 
     public LocalStorageModule(Context context) {
@@ -32,13 +28,19 @@ public class LocalStorageModule {
 
     @Provides
     @ExternalStorage
-    File provideExternalStorage() {
+    protected File provideExternalStorage() {
         return mContext.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
     }
 
     @Provides
     @InternalStorage
-    File provideInternalStorage() {
+    protected File provideInternalStorage() {
         return mContext.getFilesDir();
+    }
+
+    @Provides
+    @CacheStorage
+    protected File provideCacheDir() {
+        return mContext.getCacheDir();
     }
 }

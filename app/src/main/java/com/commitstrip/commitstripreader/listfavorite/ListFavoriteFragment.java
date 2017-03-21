@@ -12,12 +12,10 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.commitstrip.commitstripreader.R;
+import com.commitstrip.commitstripreader.common.adapter.SortedStripByDateAdapter;
+import com.commitstrip.commitstripreader.common.adapter.SortedStripByDateAdapter.OnItemClickListener;
+import com.commitstrip.commitstripreader.common.dto.DisplayStripDto;
 import com.commitstrip.commitstripreader.displayfavorite.DisplayFavoriteStripActivity;
-
-import org.w3c.dom.Text;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -27,14 +25,7 @@ public class ListFavoriteFragment extends Fragment implements ListFavoriteContra
 
     private ListFavoriteContract.Presenter mPresenter;
 
-    private List<ListFavoriteDto> favorites;
-    private ListFavoriteAdapter adapter;
-
-
-    @Override
-    public void setPresenter(ListFavoriteContract.Presenter presenter) {
-        mPresenter = presenter;
-    }
+    private SortedStripByDateAdapter mAdapter;
 
     public static ListFavoriteFragment newInstance() {
         return new ListFavoriteFragment();
@@ -42,14 +33,11 @@ public class ListFavoriteFragment extends Fragment implements ListFavoriteContra
 
     private Unbinder uibinder;
 
-    @BindView(R.id.recyclerView)
-    RecyclerView recyclerView;
+    @BindView(R.id.recyclerView) RecyclerView recyclerView;
 
-    @BindView(R.id.error_view)
-    LinearLayout errorView;
+    @BindView(R.id.error_view) LinearLayout errorView;
 
-    @BindView(R.id.error_text)
-    TextView textView;
+    @BindView(R.id.error_text) TextView textView;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -59,19 +47,22 @@ public class ListFavoriteFragment extends Fragment implements ListFavoriteContra
 
         uibinder = ButterKnife.bind(this, view);
 
-        recyclerView.setHasFixedSize(true);
+        mPresenter.subscribe();
+
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(layoutManager);
 
-        favorites = new ArrayList<>();
-
-        adapter = new ListFavoriteAdapter(favorites, item -> {
+        OnItemClickListener onItemClickListener = item -> {
             Intent intent = new Intent(getContext(), DisplayFavoriteStripActivity.class);
-            intent.putExtra(DisplayFavoriteStripActivity.ARGUMENT_STRIP_ID, item.getId());
+            intent.putExtras(DisplayFavoriteStripActivity.newInstance(item.getId()));
 
             startActivity(intent);
-        });
-        recyclerView.setAdapter(adapter);
+        };
+
+        mAdapter = new SortedStripByDateAdapter(onItemClickListener, R.layout.row_listfavorite);
+        recyclerView.setAdapter(mAdapter);
+
+        recyclerView.setHasFixedSize(true);
 
         mPresenter.fetchFavoriteStrip();
 
@@ -79,14 +70,14 @@ public class ListFavoriteFragment extends Fragment implements ListFavoriteContra
     }
 
     @Override
-    public void updateListFavorite(ListFavoriteDto favorite) {
+    public void setPresenter(ListFavoriteContract.Presenter presenter) {
+        mPresenter = presenter;
+    }
 
-        favorites.add(favorite);
+    @Override
+    public void updateListFavorite(DisplayStripDto favorite) {
 
-        if (favorites.size() == 1)
-            adapter.notifyItemInserted(favorites.size()-1);
-        else
-            adapter.notifyItemInserted(1);
+        mAdapter.add(favorite);
 
         recyclerView.setVisibility(View.VISIBLE);
         errorView.setVisibility(View.GONE);
@@ -112,8 +103,13 @@ public class ListFavoriteFragment extends Fragment implements ListFavoriteContra
     public void onDestroyView() {
         super.onDestroyView();
 
-        uibinder.unbind();
-        mPresenter.unsubscribe();
+        if (uibinder != null) {
+            uibinder.unbind();
+        }
+
+        if (mPresenter != null) {
+            mPresenter.unsubscribe();
+        }
     }
 
 }

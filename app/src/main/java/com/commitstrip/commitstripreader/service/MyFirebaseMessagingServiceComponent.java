@@ -1,15 +1,13 @@
 package com.commitstrip.commitstripreader.service;
 
-import com.commitstrip.commitstripreader.data.source.StripRepositoryComponent;
-import com.commitstrip.commitstripreader.util.FragmentScoped;
+import com.commitstrip.commitstripreader.data.component.DataSourceComponent;
+import com.commitstrip.commitstripreader.util.di.FragmentScoped;
 
-
-import javax.inject.Singleton;
 
 import dagger.Component;
 
 @FragmentScoped
-@Component(dependencies = StripRepositoryComponent.class)
+@Component(dependencies = DataSourceComponent.class)
 public interface MyFirebaseMessagingServiceComponent {
 
     void inject(MyFirebaseMessagingService myFirebaseMessagingService);

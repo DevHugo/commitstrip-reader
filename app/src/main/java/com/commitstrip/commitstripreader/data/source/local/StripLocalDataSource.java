@@ -1,24 +1,23 @@
 package com.commitstrip.commitstripreader.data.source.local;
 
-import android.content.SharedPreferences;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
-import com.commitstrip.commitstripreader.configuration.Configuration;
 import com.commitstrip.commitstripreader.data.source.StripDataSource;
 import com.commitstrip.commitstripreader.data.source.local.converter.ListStripDtoToListStripDao;
 import com.commitstrip.commitstripreader.data.source.local.converter.StripDaoToStripDto;
 import com.commitstrip.commitstripreader.data.source.local.converter.StripDtoToStripDao;
-import com.commitstrip.commitstripreader.data.source.local.exception.NotSynchronizedException;
 import com.commitstrip.commitstripreader.dto.StripDto;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import io.reactivex.Flowable;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.requery.Persistable;
 import io.requery.reactivex.ReactiveEntityStore;
@@ -27,80 +26,139 @@ import io.requery.reactivex.ReactiveEntityStore;
 public class StripLocalDataSource implements StripDataSource.LocalDataSource {
 
     private final ReactiveEntityStore<Persistable> mLocalDatabase;
-    private final SharedPreferences mSharedPreferences;
 
     private static String TAG = "StripLocalDataSource";
 
     private Date dateLongTimeAgo;
 
-    @Inject
-    public StripLocalDataSource(ReactiveEntityStore<Persistable> localDatabase,
-                                SharedPreferences sharedPreferences) {
+    public StripLocalDataSource(ReactiveEntityStore<Persistable> localDatabase) {
 
-        mSharedPreferences = sharedPreferences;
         mLocalDatabase = localDatabase;
 
-        dateLongTimeAgo = new Date(1*1000);
+        dateLongTimeAgo = new Date(1000);
     }
 
-    /**
-     * Fetch a strip with the id specified in parameter in local database.
-     *
-     * Throw a NotSynchronizedException, if the local database have not been synchronized with the org.commitstrip.commistripreader.data.source.remote yet.
-     *
-     * @param id null id will return the most recent strip
-     */
+    /* (no-Javadoc) */
     @Override
-    public Single<StripDto> fetchStrip(Long id) {
+    public Maybe<StripDto> fetchStrip(@Nullable Long id) {
 
-        if (mSharedPreferences.getBoolean(Configuration.SHAREDPREFERENCES_KEY_DATABASE_SYNC_OK, false)) {
-            if (id != null) {
-                return fetchStripDao(id)
-                        .map(new StripDaoToStripDto());
-            }
-            else {
-                return mLocalDatabase.select(StripDaoEntity.class)
-                        .from(StripDaoEntity.class)
-                        .orderBy(StripDaoEntity.DATE.desc())
-                        .limit(1)
-                        .get()
-                        .observable()
-                        .map(new StripDaoToStripDto())
-                        .firstOrError();
-            }
-        }
-        else {
-            return Single.error(new NotSynchronizedException());
+        if (id != null) {
+
+            return fetchStripDao(id).map(new StripDaoToStripDto());
+        } else {
+
+            return mLocalDatabase.select(StripDaoEntity.class)
+                    .from(StripDaoEntity.class)
+                    .orderBy(StripDaoEntity.RELEASE_DATE.desc())
+                    .limit(1)
+                    .get()
+                    .maybe()
+                    .map(new StripDaoToStripDto());
         }
     }
 
-    /**
-     * Return true, if the strip exist in local database, false otherwise.
-     *
-     * Be warned, it doesn't mean that the strip will not exist in the backend.
-     * If the local database is not synchronized with the backend, the method will NOT return a NotSynchronizedException
-     *
-     * @param id
-     * @return
-     */
+    /* (no-Javadoc) */
     @Override
-    public boolean existStrip(@NonNull Long id) {
+    public Flowable<StripDto> fetchListStrip(
+            @NonNull Integer numberOfStripPerPage,
+            @NonNull Integer page) {
 
-        if (id == null)
+        if (numberOfStripPerPage == null && page == null) {
             throw new IllegalArgumentException();
+        }
 
-        return mLocalDatabase.count(StripDaoEntity.class)
-            .from(StripDaoEntity.class)
-            .where(StripDaoEntity.ID.equal(id))
-            .get()
-            .value() >= 1;
+        Integer from, to;
+        if (page != 0 && page >= 0) {
+            from = (page - 1) * numberOfStripPerPage;
+            to = page * numberOfStripPerPage;
+        } else {
+            from = 0;
+            to = numberOfStripPerPage;
+        }
+
+        return mLocalDatabase.select(StripDaoEntity.class)
+                .from(StripDaoEntity.class)
+                .orderBy(StripDaoEntity.RELEASE_DATE.desc())
+                .limit(to)
+                .get()
+                .flowable()
+                .skip(from)
+                .map(new StripDaoToStripDto());
     }
 
+    /* (no-Javadoc) */
+    @Override
+    public Flowable<StripDto> fetchListStrip(@NonNull Iterable<Long> listId) {
+
+        if (listId == null) {
+            throw new IllegalArgumentException();
+        }
+
+        Iterator<Long> iteratorListId = listId.iterator();
+
+        if (!iteratorListId.hasNext()) {
+            return Flowable.empty();
+        }
+
+        List<Long> target = new ArrayList<>();
+        Long id;
+        while (iteratorListId.hasNext()) {
+            id = iteratorListId.next();
+
+            target.add(id);
+        }
+
+        return mLocalDatabase.select(StripDaoEntity.class)
+                .from(StripDaoEntity.class)
+                .where(StripDaoEntity.ID.in(target))
+                .get()
+                .flowable()
+                .map(new StripDaoToStripDto());
+    }
+
+    /* (no-Javadoc) */
+    @Override
+    public Flowable<StripDto> fetchRandomListStrip(
+            Integer numberOfStripPerPage, List<Long> alreadySeenStrip) {
+
+        if (numberOfStripPerPage == null ||
+                numberOfStripPerPage <= 0 ||
+                alreadySeenStrip == null) {
+            throw new IllegalArgumentException();
+        }
+
+        return mLocalDatabase.select(StripDaoEntity.class)
+                .from(StripDaoEntity.class)
+                .where(StripDaoEntity.ID.notIn(alreadySeenStrip))
+                .orderBy(new io.requery.query.function.Random())
+                .limit(numberOfStripPerPage)
+                .get()
+                .flowable()
+                .map(new StripDaoToStripDto());
+    }
+
+    /* (no-Javadoc) */
+    @Override
+    public Maybe<StripDaoEntity> existStrip(@NonNull Long id) {
+
+        if (id == null) {
+            return Maybe.empty();
+        }
+
+        return mLocalDatabase.select(StripDaoEntity.class)
+                .from(StripDaoEntity.class)
+                .where(StripDaoEntity.ID.equal(id))
+                .get()
+                .maybe();
+    }
+
+    /* (no-Javadoc) */
     @Override
     public boolean isFavorite(@NonNull Long id) {
 
-        if (id == null)
+        if (id == null) {
             throw new IllegalArgumentException();
+        }
 
         return mLocalDatabase.count(StripDaoEntity.class)
                 .from(StripDaoEntity.class)
@@ -109,90 +167,54 @@ public class StripLocalDataSource implements StripDataSource.LocalDataSource {
                 .value() >= 1;
     }
 
+    /* (no-Javadoc) */
     @Override
     public Single<StripDto> addFavorite(@NonNull StripDto mCurrentStrip) {
 
-        if (mCurrentStrip == null)
+        if (mCurrentStrip == null) {
             throw new IllegalArgumentException();
+        }
 
         return Single.just(mCurrentStrip)
                 .map(new StripDtoToStripDao())
-                .map(strip -> {strip.setIsFavorite(true); return strip; })
+                .map(strip -> {
+                    strip.setIsFavorite(true);
+                    return strip;
+                })
                 .flatMap(strip -> mLocalDatabase.upsert(strip).toFlowable().firstOrError())
                 .map(new StripDaoToStripDto());
     }
 
-
+    /* (no-Javadoc) */
     @Override
-    public Single<StripDto> deleteFavorite(@NonNull StripDto mCurrentStrip) {
+    public Maybe<Integer> deleteFavorite(@NonNull Long id) {
 
-        if (mCurrentStrip == null)
+        if (id == null) {
             throw new IllegalArgumentException();
+        }
 
         return mLocalDatabase.update(StripDaoEntity.class)
                 .set(StripDaoEntity.IS_FAVORITE, false)
-                .where(StripDaoEntity.ID.equal(mCurrentStrip.getId())).and(StripDaoEntity.IS_FAVORITE.eq(true))
+                .where(StripDaoEntity.ID.equal(id)).and(StripDaoEntity.IS_FAVORITE.eq(true))
                 .get()
                 .single()
-                .flatMap(row -> {
-                    if (row >= 1) {
-                        return Single.just(mCurrentStrip);
-                    }
-                    else {
-                        return Single.error(new NoSuchElementException());
-                    }
-                });
+                .filter(numberRow -> numberRow != 0);
     }
 
-    @Override
-    public boolean cacheForStripShouldBeClean(Long id) {
-        return !isIn10MostRecentStrip(id) &&
-               !isInNext10Strip (mSharedPreferences.getLong(Configuration.SHAREDPREFERENCES_KEY_LAST_STRIP_READ, 0), id) &&
-               !isFavorite(id);
-    }
-
-    private boolean isInNext10Strip(long startId, long idToBeFound) {
-        Integer i=0;
-        StripDaoEntity strip;
-        Long currentId = startId;
-        boolean found = false;
-
-        do {
-            strip = mLocalDatabase.select(StripDaoEntity.class)
-                    .from(StripDaoEntity.class)
-                    .where(StripDaoEntity.ID.equal(currentId))
-                    .get().first();
-
-           if (strip.getId() == idToBeFound) {
-               found = true;
-           }
-
-           currentId = strip.getNext();
-
-        } while (i<=10 && !found);
-
-        return found;
-    }
-
-    private boolean isIn10MostRecentStrip(Long id) {
-          return mLocalDatabase.count(StripDaoEntity.class)
-                .from(StripDaoEntity.class)
-                .where(StripDaoEntity.ID.equal(id))
-                .orderBy(StripDaoEntity.DATE.desc())
-                .limit(10)
-                .get().value() > 0;
-    }
-
+    /* (no-Javadoc) */
     @Override
     public Single<StripDto> fetchNextFavoriteStrip(@NonNull Date date) {
 
-        if (date == null)
+        if (date == null) {
             throw new IllegalArgumentException();
+        }
 
         return mLocalDatabase.select(StripDaoEntity.class)
                 .from(StripDaoEntity.class)
-                .where(StripDaoEntity.DATE.between(date, new Date())).and(StripDaoEntity.IS_FAVORITE.eq(true)).and(StripDaoEntity.DATE.ne(date))
-                .orderBy(StripDaoEntity.DATE.asc())
+                .where(StripDaoEntity.RELEASE_DATE.between(date, new Date())).and(
+                        StripDaoEntity.IS_FAVORITE.eq(true)).and(
+                        StripDaoEntity.RELEASE_DATE.ne(date))
+                .orderBy(StripDaoEntity.RELEASE_DATE.asc())
                 .limit(1)
                 .get()
                 .flowable()
@@ -200,16 +222,20 @@ public class StripLocalDataSource implements StripDataSource.LocalDataSource {
                 .map(new StripDaoToStripDto());
     }
 
+    /* (no-Javadoc) */
     @Override
     public Single<StripDto> fetchPreviousFavoriteStrip(@NonNull Date date) {
 
-        if (date == null)
+        if (date == null) {
             throw new IllegalArgumentException();
+        }
 
         return mLocalDatabase.select(StripDaoEntity.class)
                 .from(StripDaoEntity.class)
-                .where(StripDaoEntity.DATE.between(dateLongTimeAgo, date)).and(StripDaoEntity.IS_FAVORITE.eq(true)).and(StripDaoEntity.DATE.ne(date))
-                .orderBy(StripDaoEntity.DATE.desc())
+                .where(StripDaoEntity.RELEASE_DATE.between(dateLongTimeAgo, date)).and(
+                        StripDaoEntity.IS_FAVORITE.eq(true)).and(
+                        StripDaoEntity.RELEASE_DATE.ne(date))
+                .orderBy(StripDaoEntity.RELEASE_DATE.desc())
                 .limit(1)
                 .get()
                 .flowable()
@@ -217,28 +243,24 @@ public class StripLocalDataSource implements StripDataSource.LocalDataSource {
                 .map(new StripDaoToStripDto());
     }
 
+    /* (no-Javadoc) */
     @Override
-    public Single<StripDaoEntity> saveStrip(@NonNull StripDto strip) {
+    public Flowable<Iterable<StripDaoEntity>> upsertStrip(@NonNull Iterable<StripDto> strips) {
 
-        StripDaoEntity stripDao = new StripDtoToStripDao().apply(strip);
-        return mLocalDatabase.insert(stripDao);
-    }
-
-    @Override
-    public Flowable<Iterable<StripDaoEntity>> saveStrip(@NonNull List<StripDto> strips) {
-
-        if (strips == null)
+        if (strips == null) {
             throw new IllegalArgumentException();
+        }
 
         List<StripDaoEntity> stripDao = new ListStripDtoToListStripDao().apply(strips);
-        return mLocalDatabase.insert(stripDao).toFlowable();
+        return mLocalDatabase.upsert(stripDao).toFlowable();
     }
 
+    /* (no-Javadoc) */
     @Override
     public Single<StripDto> fetchMostRecentStrip() {
         return mLocalDatabase.select(StripDaoEntity.class)
                 .from(StripDaoEntity.class)
-                .orderBy(StripDaoEntity.DATE.desc())
+                .orderBy(StripDaoEntity.RELEASE_DATE.desc())
                 .limit(1)
                 .get()
                 .flowable()
@@ -246,6 +268,7 @@ public class StripLocalDataSource implements StripDataSource.LocalDataSource {
                 .map(new StripDaoToStripDto());
     }
 
+    /* (no-Javadoc) */
     @Override
     public Flowable<StripDto> fetchFavoriteStrip() {
 
@@ -257,16 +280,82 @@ public class StripLocalDataSource implements StripDataSource.LocalDataSource {
                 .map(new StripDaoToStripDto());
     }
 
-    private Single<StripDaoEntity> fetchStripDao (Long id) {
+    /* (no-Javadoc) */
+    @Override
+    public Maybe<StripDto> fetchOlderStrip() {
 
-        if (id == null)
+        return mLocalDatabase.select(StripDaoEntity.class)
+                .from(StripDaoEntity.class)
+                .where(StripDaoEntity.RELEASE_DATE.in(mLocalDatabase.select(StripDaoEntity.RELEASE_DATE.min())))
+                .get()
+                .maybe()
+                .map(new StripDaoToStripDto());
+    }
+
+    /* (no-Javadoc) */
+    @Override
+    public Flowable<StripDto> fetchNumberOfStrip(Date from, Date to) {
+         return mLocalDatabase.select(StripDaoEntity.class)
+                .from(StripDaoEntity.class)
+                .where(StripDaoEntity.RELEASE_DATE.between(from, to))
+                .get()
+                .flowable()
+                .map(new StripDaoToStripDto());
+    }
+
+    /* (no-Javadoc) */
+    @Override
+    public Single<Integer> scheduleStripForDownload(List<StripDto> param) {
+
+        return Single
+                .just(param)
+                .flatMap(strips -> {
+
+                    List<Long> ids = new ArrayList<>();
+
+                    for (StripDto strip : strips){
+                        ids.add(strip.getId());
+                    }
+
+                     return mLocalDatabase
+                            .update(StripDaoEntity.class)
+                            .set(StripDaoEntity.HAVE_TO_DOWNLOAD, true)
+                            .where(StripDaoEntity.ID.in(ids))
+                            .get().single();
+                });
+    }
+
+    /* (no-Javadoc) */
+    @Override
+    public Flowable<StripDto> fetchToDownloadImageStrip() {
+        return mLocalDatabase
+                .select(StripDaoEntity.class)
+                //.where(StripDaoEntity.HAVE_TO_DOWNLOAD.eq(true))
+                .get().flowable()
+                .map(new StripDaoToStripDto());
+    }
+
+    /* (no-Javadoc) */
+    @Override
+    public Single<Integer> flagAsDownloadedImage(Long id) {
+        return mLocalDatabase
+                .update(StripDaoEntity.class)
+                .set(StripDaoEntity.HAVE_TO_DOWNLOAD, false)
+                .where(StripDaoEntity.ID.eq(id))
+                .get().single();
+    }
+
+    private Maybe<StripDaoEntity> fetchStripDao(Long id) {
+
+        if (id == null) {
             throw new IllegalArgumentException();
+        }
 
         return mLocalDatabase.select(StripDaoEntity.class)
                 .from(StripDaoEntity.class)
                 .where(StripDaoEntity.ID.equal(id))
                 .limit(1)
                 .get()
-                .observable().firstOrError();
+                .maybe();
     }
 }

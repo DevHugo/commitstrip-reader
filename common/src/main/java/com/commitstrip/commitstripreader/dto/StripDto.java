@@ -1,16 +1,13 @@
 package com.commitstrip.commitstripreader.dto;
 
-import com.commitstrip.commitstripreader.dto.serializer.CustomDateSerializer;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
+import java.io.Serializable;
 import java.util.Date;
 
-public class StripDto {
+public class StripDto implements Serializable {
 
     private Long id;
     private String title;
-    @JsonSerialize(using = CustomDateSerializer.class)
-    private Date date;
+    private Date releaseDate;
     private String thumbnail;
     private String content;
     private String url;
@@ -20,9 +17,9 @@ public class StripDto {
     public StripDto() {
     }
 
-    public StripDto(String title, Date date, String thumbnail, String content, String url) {
+    public StripDto(String title, Date releaseDate, String thumbnail, String content, String url) {
         this.title = title;
-        this.date = date;
+        this.releaseDate = releaseDate;
         this.thumbnail = thumbnail;
         this.content = content;
         this.url = url;
@@ -44,12 +41,12 @@ public class StripDto {
         this.title = title;
     }
 
-    public Date getDate() {
-        return date;
+    public Date getReleaseDate() {
+        return releaseDate;
     }
 
-    public void setDate(Date date) {
-        this.date = date;
+    public void setReleaseDate(Date date) {
+        this.releaseDate = date;
     }
 
     public String getThumbnail() {
@@ -106,9 +103,19 @@ public class StripDto {
 
         StripDto stripDto = (StripDto) o;
 
-        if (id == null || stripDto.getId() == null) return false;
-
-        return id.equals(stripDto.id);
+        if (id != null ? !id.equals(stripDto.id) : stripDto.id != null) return false;
+        if (title != null ? !title.equals(stripDto.title) : stripDto.title != null) return false;
+        if (releaseDate != null ? !releaseDate.equals(stripDto.releaseDate) : stripDto.releaseDate != null) return false;
+        if (thumbnail != null ? !thumbnail.equals(stripDto.thumbnail)
+                : stripDto.thumbnail != null) {
+            return false;
+        }
+        if (content != null ? !content.equals(stripDto.content) : stripDto.content != null) {
+            return false;
+        }
+        if (url != null ? !url.equals(stripDto.url) : stripDto.url != null) return false;
+        if (next != null ? !next.equals(stripDto.next) : stripDto.next != null) return false;
+        return previous != null ? previous.equals(stripDto.previous) : stripDto.previous == null;
 
     }
 

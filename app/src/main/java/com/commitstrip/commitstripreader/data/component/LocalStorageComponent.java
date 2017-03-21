@@ -1,29 +1,29 @@
 package com.commitstrip.commitstripreader.data.component;
 
 import com.commitstrip.commitstripreader.data.module.LocalStorageModule;
-import com.commitstrip.commitstripreader.util.ExternalStorage;
-import com.commitstrip.commitstripreader.util.InternalStorage;
+import com.commitstrip.commitstripreader.util.di.CacheStorage;
+import com.commitstrip.commitstripreader.util.di.ExternalStorage;
+import com.commitstrip.commitstripreader.util.di.InternalStorage;
 
 import java.io.File;
-
-import javax.inject.Singleton;
 
 import dagger.Component;
 
 /**
- * This is a Dagger component. Refer to {@link com.commitstrip.commitstripreader.data} for the list of Dagger components
- * used in this application.
+ * This is a Dagger component. Refer to {@link com.commitstrip.commitstripreader.data} for the list
+ * of Dagger components used in this application.
  * <P>
- * Because this component depends on the {@link com.commitstrip.commitstripreader.data.source.StripRepositoryComponent}, which is a singleton, a
- * scope must be specified.
+ * Because this component depends on the
+ * {@link com.commitstrip.commitstripreader.data.source.DataSourceComponent},
+ * which is a singleton, a scope must be specified.
  */
-@Component (modules = {LocalStorageModule.class})
+@Component(modules = {LocalStorageModule.class})
 public interface LocalStorageComponent {
 
     /**
      * Provide external storage.
      *
-     * @return File instance pointing to the main directory picture. Be warned, you have to check if you have an
+     * @return File instance pointing to the main directory picture.
      */
     @ExternalStorage
     File provideExternalStorage();
@@ -35,5 +35,13 @@ public interface LocalStorageComponent {
      */
     @InternalStorage
     File provideInternalStorage();
+
+    /**
+     * Provide a file pointing to cache storage.
+     *
+     * @return File instance pointing to the cache internal storage.
+     */
+    @CacheStorage
+    File provideCacheDir();
 
 }

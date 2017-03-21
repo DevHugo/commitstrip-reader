@@ -11,9 +11,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestAttribute;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Date;
@@ -29,20 +31,21 @@ public class StripController {
         return stripService.findAll(pageable);
     }
 
-    @RequestMapping(value = "/strip/{idStrip:\\d+}", method = RequestMethod.GET, produces = {"application/json"})
+    @RequestMapping(value = "/strip/{idStrip:\\d+}", method = RequestMethod.GET, produces = {
+            "application/json"})
     public ResponseEntity<StripDto> findOne(@PathVariable("idStrip") Long idStrip) {
 
         StripDto strip = stripService.findOne(idStrip);
 
         if (strip != null) {
             return new ResponseEntity(strip, HttpStatus.OK);
-        }
-        else {
+        } else {
             return new ResponseEntity(HttpStatus.NOT_FOUND);
         }
     }
 
-    @RequestMapping(value = "/strip/recent", method = RequestMethod.GET, produces = {"application/json"})
+    @RequestMapping(value = "/strip/recent", method = RequestMethod.GET, produces = {
+            "application/json"})
     public StripDto recent() {
         return stripService.findMoreRecent();
     }

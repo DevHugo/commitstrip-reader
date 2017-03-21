@@ -2,7 +2,9 @@ package com.commitstrip.commitstripreader.integrationtest;
 
 import com.commitstrip.commitstripreader.backend.Application;
 import com.commitstrip.commitstripreader.backend.config.SampleConfig;
+import com.commitstrip.commitstripreader.backend.dao.StripDao;
 import com.commitstrip.commitstripreader.backend.repository.DatabaseRepository;
+import com.commitstrip.commitstripreader.dto.StripDto;
 import com.commitstrip.commitstripreader.integrationtest.util.SampleData;
 
 import org.junit.Before;
@@ -32,6 +34,7 @@ import static org.springframework.restdocs.operation.preprocess.Preprocessors.pr
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -66,7 +69,7 @@ public class FindAllStripTest {
         this.document.document(
                 responseFields(
                         fieldWithPath("content[].title").description("The strips' title"),
-                        fieldWithPath("content[].date").description("The timestamp of the published date of the strips'."),
+                        fieldWithPath("content[].releaseDate").description("The timestamp of the published date of the strips'."),
                         fieldWithPath("content[].thumbnail").description("The strips' url where the thumbnail is located"),
                         fieldWithPath("content[].content").description("The strips' url where the image is located"),
                         fieldWithPath("content[].url").description("The page strips' url on CommitStrip website"),
@@ -83,6 +86,7 @@ public class FindAllStripTest {
 
         mockMvc.perform(get("/strip/"))
                 .andExpect(status().isOk())
+                .andDo(print())
                 .andDo(document)
                 .andExpect(jsonPath("$.content", hasSize(3)));
     }
@@ -90,7 +94,7 @@ public class FindAllStripTest {
     @Test
     public void findAllStripsSorted() throws Exception {
 
-        mockMvc.perform(get("/strip/?sort=title&date.dir=desc"))
+        mockMvc.perform(get("/strip/?sort=title&releaseDate.dir=desc"))
                 .andExpect(status().isOk())
                 .andDo(document)
                 .andExpect(jsonPath("$.content", hasSize(3)))
@@ -115,6 +119,8 @@ public class FindAllStripTest {
                 .andDo(document)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title", is("Mon royaume pour un commit")));
+
+        StripDao stripDto = repository.findFirst1ByOrderByReleaseDateDesc();
     }
 
 }

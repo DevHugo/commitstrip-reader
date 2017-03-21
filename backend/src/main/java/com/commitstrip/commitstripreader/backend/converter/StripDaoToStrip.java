@@ -16,7 +16,7 @@ public class StripDaoToStrip implements Converter<StripDao, StripDto> {
             to.setId(source.getId());
             to.setTitle(source.getTitle());
             to.setContent(source.getContent());
-            to.setDate(source.getDate());
+            to.setReleaseDate(source.getReleaseDate());
             to.setThumbnail(source.getThumbnail());
             to.setUrl(source.getUrl());
             to.setNext(source.getNext());

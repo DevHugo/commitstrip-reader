@@ -9,6 +9,7 @@ import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
+import dagger.Reusable;
 
 /**
  * This is a Dagger module. We use this to pass the image downloading module to the repository.
@@ -23,7 +24,6 @@ public class ImageDownloadingModule {
     }
 
     @Provides
-    @Singleton
     public Picasso providesPicasso() {
         Picasso picasso = Picasso.with(mContext);
 

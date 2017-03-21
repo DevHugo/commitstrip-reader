@@ -15,12 +15,13 @@ public abstract class StripDao {
     @Key
     Long id; // Have to be the same than the id pushed by the server.
     String title;
-    Date date;
+    Date releaseDate;
     String thumbnail;
     String content;
     String url;
     boolean isFavorite;
     Long previous; // Id to the previous strip (published before the current one)
     Long next;  // Id to the next strip (published after this one)
+    boolean haveToDownload;
 
 }

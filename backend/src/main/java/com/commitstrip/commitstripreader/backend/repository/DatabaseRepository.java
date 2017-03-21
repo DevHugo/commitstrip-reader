@@ -8,7 +8,7 @@ import java.util.Date;
 import java.util.List;
 
 public interface DatabaseRepository extends PagingAndSortingRepository<StripDao, Long> {
-    StripDao findFirst1ByOrderByDateAsc();
+    StripDao findFirst1ByOrderByReleaseDateDesc();
     StripDao findOneByTitle(String title);
     StripDao findFirst1ByOrderByIdDesc();
 }

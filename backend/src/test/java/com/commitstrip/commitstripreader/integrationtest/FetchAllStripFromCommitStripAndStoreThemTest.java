@@ -61,8 +61,4 @@ public class FetchAllStripFromCommitStripAndStoreThemTest {
 
         Mockito.verify(databaseRepositoryMock, atLeast(3)).save((List<StripDao>) anyObject());
     }
-
-
-
-
 }

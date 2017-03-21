@@ -9,17 +9,15 @@ import java.util.stream.Collectors;
 
 import io.reactivex.functions.Function;
 
-public class ListStripDtoToListStripDao implements Function<List<StripDto>, List<StripDaoEntity>> {
-
-    private String TAG = "StripDtoToListStripDao";
+public class ListStripDtoToListStripDao implements Function<Iterable<StripDto>, List<StripDaoEntity>> {
 
     @Override
-    public List<StripDaoEntity> apply(List<StripDto> source) {
+    public List<StripDaoEntity> apply(Iterable<StripDto> source) {
 
         if (source == null)
             throw new IllegalArgumentException();
 
-        List<StripDaoEntity> strips = new ArrayList();
+        List<StripDaoEntity> strips = new ArrayList<>();
 
         StripDtoToStripDao converter = new StripDtoToStripDao();
         for (StripDto strip : source) {

@@ -2,7 +2,13 @@ package com.commitstrip.commitstripreader.data.source.remote;
 
 import com.commitstrip.commitstripreader.dto.StripDto;
 
+import org.reactivestreams.Publisher;
+
+import java.util.Date;
 import java.util.List;
+
+import io.reactivex.Flowable;
+import io.reactivex.functions.Function;
 
 /**
  * A simple object to map the response from the backend for the url /strip/

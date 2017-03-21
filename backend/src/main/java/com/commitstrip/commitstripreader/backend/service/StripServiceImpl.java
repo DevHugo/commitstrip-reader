@@ -52,6 +52,7 @@ public class StripServiceImpl implements StripService {
         if (isInProduction())
             numberPageToFetch = repositoryCommitStrip.fetchPageNumber();
 
+
         for (int i=1; i <= numberPageToFetch; i++) {
             Iterable<StripDao> strips = repositoryCommitStrip.fetchStripFromCommitStripOnPage(i);
 
@@ -86,7 +87,7 @@ public class StripServiceImpl implements StripService {
 
     @Override
     public StripDto findMoreRecent() {
-        StripDao strip = repositoryDatabase.findFirst1ByOrderByDateAsc();
+        StripDao strip = repositoryDatabase.findFirst1ByOrderByReleaseDateDesc();
 
         if (strip != null) {
             return new StripDaoToStrip().convert(strip);

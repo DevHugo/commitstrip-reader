@@ -14,7 +14,7 @@ public class StripDao {
     private Long id;
 
     private String title;
-    private Date date;
+    private Date releaseDate;
     private String thumbnail;
     private String content;
     private String url;
@@ -24,16 +24,16 @@ public class StripDao {
     public StripDao() {
         id = Long.valueOf(0);
         title = "";
-        date = new Date();
+        releaseDate = new Date();
         thumbnail = "";
         content = "";
         url = "";
     }
 
-    public StripDao(Long id, String title, Date date, String thumbnail, String content, String url) {
+    public StripDao(Long id, String title, Date releaseDate, String thumbnail, String content, String url) {
         this.id = id;
         this.title = title;
-        this.date = date;
+        this.releaseDate = releaseDate;
         this.thumbnail = thumbnail;
         this.content = content;
         this.url = url;
@@ -55,12 +55,12 @@ public class StripDao {
         this.title = title;
     }
 
-    public Date getDate() {
-        return date;
+    public Date getReleaseDate() {
+        return releaseDate;
     }
 
-    public void setDate(Date date) {
-        this.date = date;
+    public void setReleaseDate(Date releaseDate) {
+        this.releaseDate = releaseDate;
     }
 
     public String getThumbnail() {

@@ -2,19 +2,15 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item
-        android:id="@+id/favorite"
-        android:orderInCategory="100"
-        android:title="Favorite"
-        android:icon="@drawable/ic_action_heart"
-        android:visible="false"
-        app:showAsAction="always"></item>
+  <item
+      android:id="@+id/fav_button_menu"
+      android:title="@string/favorite"
+      app:showAsAction="always"
+      app:actionLayout="@layout/like_button" />
 
-    <item
-        android:id="@+id/unfavorite"
-        android:orderInCategory="100"
-        android:title="Delete favorite"
-        android:icon="@drawable/ic_action_heartless"
-        android:visible="false"
-        app:showAsAction="always"></item>
+  <item
+      android:id="@+id/share_button_menu"
+      android:title="@string/share"
+      android:icon="@android:drawable/ic_menu_share"
+      app:showAsAction="always" />
 </menu>

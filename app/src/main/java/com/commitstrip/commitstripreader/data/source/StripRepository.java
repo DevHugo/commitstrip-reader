@@ -1,31 +1,40 @@
 package com.commitstrip.commitstripreader.data.source;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
+import android.support.v4.util.Pair;
+import android.util.Log;
 
+import com.commitstrip.commitstripreader.common.dto.DisplayStripDto;
+import com.commitstrip.commitstripreader.configuration.Configuration;
+import com.commitstrip.commitstripreader.data.module.DataSourceModule;
 import com.commitstrip.commitstripreader.data.source.local.StripDaoEntity;
-import com.commitstrip.commitstripreader.data.source.local.exception.NotSynchronizedException;
 import com.commitstrip.commitstripreader.dto.StripDto;
-import com.commitstrip.commitstripreader.listfavorite.ListFavoriteDto;
+import com.commitstrip.commitstripreader.util.CheckInternetConnection;
+import com.commitstrip.commitstripreader.util.Preconditions;
+import com.commitstrip.commitstripreader.util.converter.StripDtoToDisplayStripDto;
 import com.squareup.picasso.RequestCreator;
 
-import java.util.Date;
-import java.util.List;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import io.reactivex.Flowable;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 
-@Singleton
-public class StripRepository implements StripDataSource {
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
 
-    private String TAG = "StripRepository";
+import javax.inject.Inject;
+
+public class StripRepository implements StripDataSource {
 
     private final StripDataSource.LocalDataSource mStripLocalDataSource;
     private final StripDataSource.RemoteDataSource mStripRemoteDataSource;
     private final StripDataSource.StripImageCacheDataSource mStripImageCacheDataSource;
+    private final StripDataSource.StripSharedPreferencesDataSource mSharedPreferences;
 
     /**
      * The number of minutes before refreshing the data.
@@ -36,17 +45,10 @@ public class StripRepository implements StripDataSource {
     private Long mLastTimeRefreshData = 0L;
 
     /**
-     * Marks the cache as invalid, to force an update the next time data is requested. This variable
-     * has package local visibility so it can be accessed from tests.
-     */
-    @VisibleForTesting
-    boolean mCacheIsDirty = false;
-
-    /**
      * By marking the constructor with {@code @Inject}, Dagger will try to inject the dependencies
      * required to create an instance of the TasksRepository. Because {@link StripDataSource} is an
      * interface, we must provide to Dagger a way to build those arguments, this is done in
-     * {@link StripRepositoryModule}.
+     * {@link DataSourceModule}.
      * <P>
      * When two arguments or more have the same type, we must provide to Dagger a way to
      * differentiate them. This is done using a qualifier.
@@ -56,199 +58,355 @@ public class StripRepository implements StripDataSource {
      */
     @Inject
     StripRepository(StripDataSource.RemoteDataSource stripRemoteDataSource,
-                    StripDataSource.LocalDataSource stripLocalDataSource,
-                    StripDataSource.StripImageCacheDataSource stripImageCacheDataSource) {
+            StripDataSource.LocalDataSource stripLocalDataSource,
+            StripDataSource.StripImageCacheDataSource stripImageCacheDataSource,
+            StripDataSource.StripSharedPreferencesDataSource sharedPreferences) {
         mStripRemoteDataSource = stripRemoteDataSource;
         mStripLocalDataSource = stripLocalDataSource;
         mStripImageCacheDataSource = stripImageCacheDataSource;
+        mSharedPreferences = sharedPreferences;
     }
 
-    /**
-     * Get the strip with the id from local or org.commitstrip.commistripreader.data.source.remote, whichever is available first.
-     *
-     * @param id Id send by the server
-     * @return The strip with the id specified in parameter. If id is null, the strip with the more recent date is returned.
-     */
+    /* (no-Javadoc) */
     @Override
-    public Single<StripDto> fetchStrip(@NonNull Long id) {
+    public Maybe<StripDto> fetchStrip(@Nullable Long id, boolean forceNetwork) {
 
-        Single<StripDto> localStrip = mStripLocalDataSource.fetchStrip(id);
-        Single<StripDto> remoteStrip = mStripRemoteDataSource.fetchStrip(id);
+        Maybe<StripDto> localStrip = mStripLocalDataSource.fetchStrip(id);
+        Maybe<StripDto> remoteStrip = mStripRemoteDataSource.fetchStrip(id);
+
+        if (Configuration.OFFLINE_MODE) {
+            return localStrip;
+        }
 
         Long timestamp = System.currentTimeMillis() / 1000;
 
-        // If the cache is dirty or the last call was too far ago, we need to fetch data from the org.commitstrip.commistripreader.data.source.remote.
-        if(mCacheIsDirty || timestamp > mLastTimeRefreshData+(SHOULD_REFRESH_DATA*60)) {
+        // If the cache is dirty or the last call was too far ago, we need to fetch data from the
+        // org.commitstrip.commistripreader.data.source.remote.
+        if (forceNetwork || (timestamp > (mLastTimeRefreshData + (SHOULD_REFRESH_DATA * 60)))) {
 
             return remoteStrip
                     .onErrorResumeNext(localStrip)
-                    .doOnSuccess(converter -> mLastTimeRefreshData = timestamp);
+                    .doOnSuccess(onSuccess -> mLastTimeRefreshData = timestamp);
         }
 
         return localStrip.onErrorResumeNext(remoteStrip);
     }
 
+    /* (no-Javadoc) */
+    @Override
+    public Flowable<StripDto> fetchListStrip(Integer numberOfStripPerPage, int page,
+            boolean forceNetwork) {
+
+        Flowable<StripDto> localStrip =
+                mStripLocalDataSource.fetchListStrip(numberOfStripPerPage, page);
+
+        Flowable<StripDto> remoteStrip =
+                mStripRemoteDataSource.fetchListStrip(numberOfStripPerPage, page);
+
+        Long timestamp = System.currentTimeMillis() / 1000;
+
+        if (Configuration.OFFLINE_MODE) {
+            return localStrip;
+        }
+
+        // If the cache is dirty or the last call was too far ago, we need to fetch data from the
+        // org.commitstrip.commistripreader.data.source.remote.
+        if (forceNetwork || (timestamp > (mLastTimeRefreshData + (SHOULD_REFRESH_DATA * 60)))) {
+
+            return remoteStrip
+                    .onErrorResumeNext(throwable -> localStrip)
+                    .doOnTerminate(() -> mLastTimeRefreshData = timestamp);
+        }
+
+        return localStrip.onErrorResumeNext(throwable -> {
+            if (page == 0) {
+                return remoteStrip
+                        .onErrorResumeNext(
+                                fetchStripWithImageThatAlreadyInCache()
+                                        .toSortedList((strip, other) ->
+                                                strip.getReleaseDate().compareTo(other.getReleaseDate()))
+                                        .flattenAsFlowable(strips -> strips));
+            }
+
+            return remoteStrip;
+        });
+    }
+
     /**
-     * Fetch image from memory, disk or network, whichever is available first.
+     * Fetch a list of strip which image cache exist.
      *
-     * @param url
-     * @return Request object, call method into as described in the picasso library fon binding the image to an ImageView.
+     * @return strips
      */
-    public RequestCreator fetchImageStrip (@NonNull Long id, @NonNull String url) {
+    private Flowable<StripDto> fetchStripWithImageThatAlreadyInCache() {
+
+        Iterable<Long> listId = mStripImageCacheDataSource.getCachedImagesId();
+
+        return mStripLocalDataSource.fetchListStrip(listId);
+    }
+
+    /* (no-Javadoc) */
+    @Override
+    public RequestCreator fetchImageStrip(@NonNull Long id, @NonNull String url) {
+
+        Preconditions.checkNotNull(id);
+        Preconditions.checkNotNull(url);
 
         if (mStripImageCacheDataSource.isImageCacheForStripExist(id)) {
             return mStripImageCacheDataSource.fetchImageStrip(id);
+        } else {
+            return mStripRemoteDataSource.fetchImageStrip(url);
         }
-
-        return mStripRemoteDataSource.fetchImageStrip(url);
     }
 
-    /**
-     * Fetch from disk, if the strip is in user favorite.
-     *
-     * @param id
-     * @return whenever the strip is in user favorite.
-     */
-    public boolean isFavorite (@NonNull Long id) {
+    /* (no-Javadoc) */
+    @Override
+    public boolean isFavorite(@NonNull Long id) {
+        Preconditions.checkNotNull(id);
+
         return mStripLocalDataSource.isFavorite(id);
     }
 
-    /**
-     * Add the strip pass in parameter in the favorite
-     *
-     * @param mCurrentStrip The strip to save in favorite.
-     */
-    public Single<StripDto> addFavorite(@NonNull StripDto mCurrentStrip) {
+    /* (no-Javadoc) */
+    @Override
+    public Single<StripDto> addFavorite(@NonNull StripDto mCurrentStrip,
+            @NonNull ByteArrayOutputStream byteArrayOutputStream) {
+
+        Preconditions.checkNotNull(mCurrentStrip);
+        Preconditions.checkNotNull(byteArrayOutputStream);
+
         // Add in local favorite
         return Single.just(mCurrentStrip)
                 .flatMap(mStripLocalDataSource::addFavorite)
                 // We should fetch the image to add it in cache
                 .doOnSuccess(strip -> {
                     if (!mStripImageCacheDataSource.isImageCacheForStripExist(strip.getId())) {
-                        RequestCreator requestCreator = mStripRemoteDataSource.fetchImageStrip(mCurrentStrip.getContent());
-                        mStripImageCacheDataSource.saveImageStripInCache(mCurrentStrip.getId(), requestCreator);
+
+                        if (byteArrayOutputStream.size() != 0) {
+
+                            mStripImageCacheDataSource.saveImageStripInCache(
+                                    mCurrentStrip.getId(),
+                                    byteArrayOutputStream
+                            );
+
+                        } else {
+                            RequestCreator requestCreator =
+                                    mStripRemoteDataSource.fetchImageStrip(
+                                            mCurrentStrip.getContent());
+
+                            mStripImageCacheDataSource.saveImageStripInCache(
+                                    mCurrentStrip.getId(),
+                                    requestCreator,
+                                    fetchCompressionLevelImages());
+                        }
                     }
                 });
 
         // TODO Schedule a job, to retry if there is no internet connexion available at this moment.
     }
 
-    /**
-     * Delete the favorite strip pass in parameter.
-     *
-     * @param mCurrentStrip
-     */
-    public Single<StripDto> deleteFavorite(@NonNull StripDto mCurrentStrip) {
-        return Single.just(mCurrentStrip)
+    /* (no-Javadoc) */
+    @Override
+    public Maybe<Integer> deleteFavorite(@NonNull Long id) {
+
+        Preconditions.checkNotNull(id);
+
+        return Maybe.just(id)
                 .flatMap(mStripLocalDataSource::deleteFavorite)
                 // Delete image
-                .doOnSuccess(strip -> {
-                    if (mStripImageCacheDataSource.isImageCacheForStripExist(mCurrentStrip.getId()))
-                        mStripImageCacheDataSource.deleteImageStripInCache(mCurrentStrip.getId());
+                .doOnSuccess(numberRowAffected -> {
+                    if (numberRowAffected > 0) {
+                        if (mStripImageCacheDataSource.isImageCacheForStripExist(id)) {
+                            mStripImageCacheDataSource.deleteImageStripInCache(id);
+                        }
+                    }
                 });
     }
 
-    /**
-     * Fetch all favorite strip.
-     *
-     * @return
-     */
+    /* (no-Javadoc) */
     @Override
-    public Flowable<ListFavoriteDto> fetchFavoriteStrip() {
+    public Flowable<DisplayStripDto> fetchFavoriteStrip() {
         return mStripLocalDataSource.fetchFavoriteStrip()
+                .map(new StripDtoToDisplayStripDto())
                 .map(strip -> {
 
-                    ListFavoriteDto favorite = new ListFavoriteDto();
+                    RequestCreator requestCreator = fetchImageStrip(strip.getId(), strip.getContent());
+                    strip.setImageRequestCreator(requestCreator);
 
-                    favorite.setId(strip.getId());
-                    favorite.setTitle(strip.getTitle());
-
-                    RequestCreator requestCreator = fetchImageStrip (strip.getId(), strip.getContent());
-                    favorite.setImageRequestCreator(requestCreator);
-
-                    return favorite;
+                    return strip;
                 });
     }
 
-    /**
-     * Fetch next favorite strip according to the date pass in parameter.
-     *
-     * @param date
-     * @return
-     */
+    /* (no-Javadoc) */
     @Override
     public Single<StripDto> fetchNextFavoriteStrip(@NonNull Date date) {
+        Preconditions.checkNotNull(date);
+
         return mStripLocalDataSource.fetchNextFavoriteStrip(date);
     }
 
-    /**
-     * Fetch previous favorite strip according to the date pass in parameter
-     *
-     * @param date
-     * @return
-     */
+    /* (no-Javadoc) */
     @Override
     public Single<StripDto> fetchPreviousFavoriteStrip(@NonNull Date date) {
+        Preconditions.checkNotNull(date);
+
         return mStripLocalDataSource.fetchPreviousFavoriteStrip(date);
     }
 
-    /**
-     * Save in cache the strip image pass in parameter
-     *
-     * @param id
-     * @param url
-     */
+    /* (no-Javadoc) */
     @Override
-    public void saveImageStripInCache(@NonNull Long id, @NonNull String url) {
-        mStripImageCacheDataSource.saveImageStripInCache(id, url);
+    public Flowable<Integer> saveImageStripInCache(@NonNull Long id, @NonNull String url) {
+        Preconditions.checkNotNull(id);
+        Preconditions.checkNotNull(url);
+
+        return Flowable.just(new Pair<>(id, url))
+                .filter(pair -> !mStripImageCacheDataSource.isImageCacheForStripExist(pair.first))
+                .flatMap(pair -> mStripImageCacheDataSource
+                        .saveImageStripInCache(pair.first, pair.second, fetchCompressionLevelImages()))
+                .flatMapSingle(mStripLocalDataSource::flagAsDownloadedImage);
     }
 
-    /**
-     * Synchronize all metadata from the org.commitstrip.commistripreader.data.source.remote to the local database.
-     */
-    public void syncFromRemote () {
-
-       /*mStripRemoteDataSource
-                .fetchFirstThousandStrip()
-                // Delete from the stream all strip which are before the most recent strip save in local database.
-                .flatMap(
-                        strip ->
-                            mStripLocalDataSource.fetchMostRecentStrip()
-                                .filter(mostRecentStrip -> strip.getDate().after(mostRecentStrip.getDate()))
-                                .map(mostRecentStrip -> strip)
-                )
-                .map(mStripLocalDataSource::saveStrip)
-                .subscribe(strip -> Log.d(TAG, "Saved strip in localdatabase"));*/
-
-    }
-
-    /**
-     * Fetch all strips from backend
-     *
-     * @return all strips from the backend
-     */
+    /* (no-Javadoc) */
     @Override
     public Flowable<List<StripDto>> fetchAllStrip() {
         return mStripRemoteDataSource.fetchAllStrip();
     }
 
-    /**
-     * Save strips in local database
-     *
-     * @param strips
-     */
+    /* (no-Javadoc) */
     @Override
-    public Flowable<Iterable<StripDaoEntity>> saveStrips(@NonNull List<StripDto> strips) {
-       return mStripLocalDataSource.saveStrip(strips);
+    public Flowable<Iterable<StripDaoEntity>> upsertStrip(@NonNull List<StripDto> strips) {
+        Preconditions.checkNotNull(strips);
+
+        return mStripLocalDataSource.upsertStrip(strips);
     }
 
-    /**
-     * Fetch the strip with id pass in parameter in local database.
-     *
-     * @return all strips from the backend
-     */
+    /* (no-Javadoc) */
     @Override
-    public boolean existStripInCache(@NonNull Long id) {
-        return mStripLocalDataSource.existStrip(id);
+    public File saveImageStripInCache(@NonNull Long id,
+            @NonNull ByteArrayOutputStream outputStream) {
+
+        Preconditions.checkNotNull(id);
+        Preconditions.checkNotNull(outputStream);
+
+        return mStripImageCacheDataSource.saveImageStripInCache(id, outputStream);
+    }
+
+    /* (no-Javadoc) */
+    @Override
+    public Flowable<StripDto> fetchRandomListStrip(Integer numberOfStripPerPage,
+            List<Long> alreadySeenStrip) {
+
+        Preconditions.checkNotNull(numberOfStripPerPage);
+        Preconditions.checkNotNull(alreadySeenStrip);
+
+        // We got a internet connexion, we should use the local database otherwise we should get only
+        // displayable image
+        if (CheckInternetConnection.isOnline() && !Configuration.OFFLINE_MODE) {
+
+            return mStripLocalDataSource.fetchRandomListStrip(numberOfStripPerPage,
+                    alreadySeenStrip);
+        } else {
+            List<Long> id = mStripImageCacheDataSource.getCachedImagesId();
+
+            List<Long> selectedId = new ArrayList<>();
+            Long proposedId;
+            Random randomGenerator = new Random();
+
+            if (id.size() > (numberOfStripPerPage + alreadySeenStrip.size())) {
+
+                while (selectedId.size() <= numberOfStripPerPage) {
+                    proposedId = id.get(randomGenerator.nextInt(id.size()));
+
+                    if (!alreadySeenStrip.contains(proposedId) &&
+                            !selectedId.contains(proposedId)) {
+                        selectedId.add(proposedId);
+                    }
+                }
+
+                return mStripLocalDataSource.fetchListStrip(selectedId);
+            } else {
+                return mStripLocalDataSource.fetchListStrip(id);
+            }
+        }
+    }
+
+    /* (no-Javadoc) */
+    @Override
+    public Maybe<StripDto> fetchOlderStrip() {
+        return mStripLocalDataSource.fetchOlderStrip();
+    }
+
+    /* (no-Javadoc) */
+    @Override
+    public Flowable<StripDto> fetchNumberOfStrip(Date from, Date to) {
+        return mStripLocalDataSource.fetchNumberOfStrip(from, to);
+    }
+
+    /* (no-Javadoc) */
+    @Override
+    public Single<Integer> scheduleStripForDownload(List<StripDto> strips) {
+        return mStripLocalDataSource.scheduleStripForDownload(strips);
+    }
+
+    /* (no-Javadoc) */
+    @Override
+    public Flowable<StripDto> fetchToDownloadImageStrip() {
+        return mStripLocalDataSource.fetchToDownloadImageStrip();
+    }
+
+    /* (no-Javadoc) */
+    @Override
+    public void clearCacheStripForDownload() {
+        mStripLocalDataSource
+                .fetchFavoriteStrip()
+                .toList()
+                .flatMap(strips -> mStripImageCacheDataSource.clearCache(strips).toList());
+    }
+
+    /* (no-Javadoc) */
+    @Override
+    public int fetchCompressionLevelImages() {
+        return mSharedPreferences.fetchCompressionLevelImages();
+    }
+
+    /* (no-Javadoc) */
+    @Override
+    public void saveLastReadIdFromTheBeginningMode (Long id) {
+        mSharedPreferences.saveLastReadIdFromTheBeginningMode(id);
+    }
+
+    /* (no-Javadoc) */
+    @Override
+    public void saveLastReadDateFromTheBeginningMode(Long date) {
+        mSharedPreferences.saveLastReadDateFromTheBeginningMode(date);
+    }
+
+    /* (no-Javadoc) */
+    @Override
+    public long fetchLastReadDateFromTheBeginningMode() {
+        return mSharedPreferences.fetchLastReadDateFromTheBeginningMode();
+    }
+
+    /* (no-Javadoc) */
+    @Override
+    public Long fetchLastReadIdFromTheBeginningMode() {
+        return mSharedPreferences.fetchLastReadIdFromTheBeginningMode();
+    }
+
+    /* (no-Javadoc) */
+    @Override
+    public boolean fetchPriorityForUseVolumeKey() {
+        return mSharedPreferences.fetchPriorityForUseVolumeKey();
+    }
+
+    /* (no-Javadoc) */
+    @Override
+    public void savePriorityForUseVolumeKey(boolean useVolumeKey) {
+        mSharedPreferences.savePriorityForUseVolumeKey(useVolumeKey);
+    }
+
+    @Override
+    public File saveSharedImageInSharedFolder(@NonNull Long id,
+            @NonNull ByteArrayOutputStream outputStream) {
+        return mStripImageCacheDataSource.saveSharedImageInSharedFolder(id, outputStream);
     }
 }

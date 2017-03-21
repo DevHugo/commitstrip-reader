@@ -3,8 +3,6 @@ package com.commitstrip.commitstripreader.data.module;
 import android.content.Context;
 import android.preference.PreferenceManager;
 
-import javax.inject.Singleton;
-
 import dagger.Module;
 import dagger.Provides;
 

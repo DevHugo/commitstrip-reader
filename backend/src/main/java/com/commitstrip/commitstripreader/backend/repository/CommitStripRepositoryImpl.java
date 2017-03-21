@@ -100,10 +100,14 @@ public class CommitStripRepositoryImpl implements CommitStripRepository {
 
             Elements strips_element = strip_element.select("div > p > img");
             if (strips_element.size() > 0 || strip_element.select("img.size-full").size() > 0) {
+                String src = "";
                 if (strips_element.size() > 0)
-                    strip.setContent(strips_element.get(0).attr("src"));
+                    src = strips_element.get(0).attr("src");
                 else
-                    strip.setContent(strip_element.select("img.size-full").get(0).attr("src"));
+                    src = strip_element.select("img.size-full").get(0).attr("src");
+
+                if (src.startsWith("//")) { src = "http:" + src; }
+                strip.setContent(src);
             }
             else {
                 isStrip = false;
@@ -113,7 +117,7 @@ public class CommitStripRepositoryImpl implements CommitStripRepository {
             String date = dateWithTimezone.substring(0, dateWithTimezone.length() - 6);
 
             dateFormat = new SimpleDateFormat(ISO_8601_24H_FULL_FORMAT, Locale.ENGLISH);
-            strip.setDate(dateFormat.parse(date));
+            strip.setReleaseDate(dateFormat.parse(date));
 
             previous = id+1;
             next = id-1;

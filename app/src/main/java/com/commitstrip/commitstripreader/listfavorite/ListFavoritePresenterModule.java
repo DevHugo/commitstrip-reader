@@ -1,7 +1,5 @@
 package com.commitstrip.commitstripreader.listfavorite;
 
-import com.commitstrip.commitstripreader.strip.StripContract;
-
 import dagger.Module;
 import dagger.Provides;
 

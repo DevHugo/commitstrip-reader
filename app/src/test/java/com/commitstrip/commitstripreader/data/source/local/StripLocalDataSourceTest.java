@@ -1,21 +1,28 @@
 package com.commitstrip.commitstripreader.data.source.local;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
+
 import android.content.SharedPreferences;
 
+import com.commitstrip.commitstripreader.BuildConfig;
+import com.commitstrip.commitstripreader.MyApp;
 import com.commitstrip.commitstripreader.data.source.local.converter.StripDaoToStripDto;
-import com.commitstrip.commitstripreader.data.source.local.exception.NotSynchronizedException;
 import com.commitstrip.commitstripreader.data.source.util.SampleStrip;
 import com.commitstrip.commitstripreader.dto.StripDto;
-import com.commitstrip.commitstripreader.util.H2LocalDatabase;
+import com.commitstrip.commitstripreader.util.RobolectricDatabaseRule;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import io.reactivex.observers.TestObserver;
@@ -24,50 +31,44 @@ import io.requery.Persistable;
 import io.requery.reactivex.ReactiveEntityStore;
 import io.requery.sql.StatementExecutionException;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-@RunWith(JUnit4.class)
+@RunWith(RobolectricTestRunner.class)
+@Config(constants = BuildConfig.class, application = MyApp.class)
 public class StripLocalDataSourceTest {
 
-    private String TAG = "StripLocalDataSource";
-
     private static StripLocalDataSource mStripLocalDataSource;
-    private static ReactiveEntityStore<Persistable> mSingleEntityStore;
-    private static SharedPreferences mSharedPreferences;
     private static StripDaoEntity stripDao;
 
-    @BeforeClass
-    public static void setUpBeforeClass() {
+    @Rule
+    public RobolectricDatabaseRule mDataSourceRule =
+            new RobolectricDatabaseRule();
 
-        // Connect to local database
-        mSingleEntityStore = H2LocalDatabase.getConnection();
-        
-        // Mock SharedPreferences android class
-        mSharedPreferences = mock(SharedPreferences.class);
-        when(mSharedPreferences.getBoolean(com.commitstrip.commitstripreader.configuration.Configuration.SHAREDPREFERENCES_KEY_DATABASE_SYNC_OK, false)).thenReturn(true);
+    private ReactiveEntityStore<Persistable> mSingleEntityStore;
+
+    @Before
+    public void setUp() {
 
         // Populate class under test
-        mStripLocalDataSource = new StripLocalDataSource(mSingleEntityStore, mSharedPreferences);
+        mStripLocalDataSource = new StripLocalDataSource(mDataSourceRule.getLocalDatabase());
 
         // Insert some strip in local database
         stripDao = SampleStrip.generateSampleDao();
 
-        if (!mStripLocalDataSource.existStrip(stripDao.getId()))
-            mSingleEntityStore.insert(stripDao).blockingGet();
+        mSingleEntityStore =  mDataSourceRule.getLocalDatabase();
+
+        if (mStripLocalDataSource.existStrip(stripDao.getId()).blockingGet() == null) {
+           mSingleEntityStore.insert(stripDao).blockingGet();
+        }
     }
 
     @Test
     public void fetchStripDaoWithCorrectIdShouldReturnOneResult () {
-        TestObserver testSubscriber = new TestObserver();
+        TestObserver testObserver = new TestObserver();
 
-        mStripLocalDataSource.fetchStrip(stripDao.getId()).subscribe(testSubscriber);
+        mStripLocalDataSource.fetchStrip(stripDao.getId()).subscribe(testObserver);
 
-        testSubscriber.assertNoErrors();
-        testSubscriber.assertValueCount(1);
-        testSubscriber.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValueCount(1);
+        testObserver.assertComplete();
     }
 
     @Test
@@ -87,38 +88,18 @@ public class StripLocalDataSourceTest {
 
         mStripLocalDataSource.fetchStrip(100000L).subscribe(testSubscriber);
 
-        testSubscriber.assertError(NoSuchElementException.class);
         testSubscriber.assertNoValues();
         testSubscriber.assertTerminated();
     }
 
     @Test
-    public void fetchStripDaoWithNonSynchronizedDatabaseShouldReturnOnError () {
-        TestObserver testSubscriber = new TestObserver<>();
-
-        when(mSharedPreferences.getBoolean(com.commitstrip.commitstripreader.configuration.Configuration.SHAREDPREFERENCES_KEY_DATABASE_SYNC_OK, false)).thenReturn(false);
-
-        mStripLocalDataSource.fetchStrip(100000L).subscribe(testSubscriber);
-
-        when(mSharedPreferences.getBoolean(com.commitstrip.commitstripreader.configuration.Configuration.SHAREDPREFERENCES_KEY_DATABASE_SYNC_OK, false)).thenReturn(true);
-
-        testSubscriber.assertError(NotSynchronizedException.class);
-        testSubscriber.assertTerminated();
-    }
-
-    @Test
     public void existStripWithExistStripShouldReturnTrue () {
-        assertEquals(true, mStripLocalDataSource.existStrip(1L));
+        assertEquals(stripDao, mStripLocalDataSource.existStrip(1L).blockingGet());
     }
 
     @Test
     public void existStripWithNonExistStripShouldReturnFalse () {
-        assertEquals(false, mStripLocalDataSource.existStrip(1000000L));
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void existStripWithNullShouldThrowIllegalException () {
-        mStripLocalDataSource.existStrip(null);
+        assertEquals(null, mStripLocalDataSource.existStrip(1000000L).blockingGet());
     }
 
     @Test
@@ -128,10 +109,9 @@ public class StripLocalDataSourceTest {
 
     @Test
     public void isFavoriteWithNonExistStripShouldReturnFalse () {
-        assertEquals(false, mStripLocalDataSource.existStrip(10000000L));
+        assertEquals(null, mStripLocalDataSource.existStrip(10000000L).blockingGet());
     }
 
-    @Test(expected = IllegalArgumentException.class)
     public void isFavoriteWithNullShouldThrowIllegalException () {
         mStripLocalDataSource.existStrip(null);
     }
@@ -189,7 +169,7 @@ public class StripLocalDataSourceTest {
 
         StripDto stripDto = new StripDaoToStripDto().apply(stripDao);
 
-        mStripLocalDataSource.deleteFavorite(stripDto).subscribe(testSubscriber);
+        mStripLocalDataSource.deleteFavorite(stripDto.getId()).subscribe(testSubscriber);
 
         testSubscriber.assertNoErrors();
         testSubscriber.assertValueCount(1);
@@ -205,14 +185,11 @@ public class StripLocalDataSourceTest {
 
     @Test
     public void deleteFavoriteWithAnNonExistingStripShouldReturnErrorDatabase() {
-        StripDto sampleNonExistingStrip = new StripDto();
-            sampleNonExistingStrip.setId(29071991L);
 
         TestObserver testSubscriber = new TestObserver<>();
 
-        mStripLocalDataSource.deleteFavorite(sampleNonExistingStrip).subscribe(testSubscriber);
+        mStripLocalDataSource.deleteFavorite(29071991L).subscribe(testSubscriber);
 
-        testSubscriber.assertError(NoSuchElementException.class);
         testSubscriber.assertNoValues();
     }
 
@@ -254,7 +231,7 @@ public class StripLocalDataSourceTest {
     public void fetchPreviousFavoriteStripWithAnNonExistingStripShouldReturnError() {
         TestObserver testSubscriber = new TestObserver<>();
 
-        Date beforeStrip = new Date(stripDao.getDate().getTime()-1000);
+        Date beforeStrip = new Date(stripDao.getReleaseDate().getTime()-1000);
 
         mStripLocalDataSource.fetchPreviousFavoriteStrip(beforeStrip).subscribe(testSubscriber);
 
@@ -265,12 +242,15 @@ public class StripLocalDataSourceTest {
     @Test
     public void saveStripWithAnNonExistingStripShouldReturnStrip() {
 
-        TestObserver testSubscriber = new TestObserver<>();
+        TestSubscriber testSubscriber = new TestSubscriber<>();
 
         StripDto stripDto = new StripDto();
             stripDto.setId(2L);
 
-        mStripLocalDataSource.saveStrip(stripDto).subscribe(testSubscriber);
+        List<StripDto> strips = new ArrayList<>();
+        strips.add(stripDto);
+
+        mStripLocalDataSource.upsertStrip(strips).subscribe(testSubscriber);
 
         testSubscriber.assertNoErrors();
         testSubscriber.assertValueCount(1);
@@ -281,18 +261,6 @@ public class StripLocalDataSourceTest {
                 .get().value() >= 1);
 
         mSingleEntityStore.delete(StripDaoEntity.class).where(StripDaoEntity.ID.eq(stripDto.getId())).get().value();
-    }
-
-    @Test
-    public void saveStripWithAnExistingStripShouldReturnError() {
-        TestObserver testSubscriber = new TestObserver<>();
-
-        StripDto stripDto = new StripDaoToStripDto().apply(stripDao);
-
-        mStripLocalDataSource.saveStrip(stripDto).subscribe(testSubscriber);
-
-        testSubscriber.assertError(StatementExecutionException.class);
-        testSubscriber.assertValueCount(0);
     }
 
     @Test
@@ -302,7 +270,10 @@ public class StripLocalDataSourceTest {
         StripDto stripDto = new StripDto();
         stripDto.setId(2L);
 
-        mStripLocalDataSource.saveStrip(Arrays.asList(stripDto)).subscribe(testSubscriber);
+        List<StripDto> strips = new ArrayList<>();
+        strips.add(stripDto);
+
+        mStripLocalDataSource.upsertStrip(strips).subscribe(testSubscriber);
 
         testSubscriber.assertNoErrors();
         testSubscriber.assertValueCount(1);
@@ -313,18 +284,6 @@ public class StripLocalDataSourceTest {
                 .get().value() >= 1);
 
         mSingleEntityStore.delete(StripDaoEntity.class).where(StripDaoEntity.ID.eq(stripDto.getId())).get().value();
-    }
-
-    @Test
-    public void saveListStripWithAnExistingStripShouldReturnError() {
-        TestObserver testSubscriber = new TestObserver<>();
-
-        StripDto stripDto = new StripDaoToStripDto().apply(stripDao);
-
-        mStripLocalDataSource.saveStrip(stripDto).subscribe(testSubscriber);
-
-        testSubscriber.assertError(StatementExecutionException.class);
-        testSubscriber.assertValueCount(0);
     }
 
     @Test
@@ -389,8 +348,8 @@ public class StripLocalDataSourceTest {
                 .get().value();
     }
 
-    @AfterClass
-    public static void tearDownAfterClass() {
+    @After
+    public void tearDownAfterClass() {
         mSingleEntityStore.delete(StripDaoEntity.class).where(StripDaoEntity.ID.eq(stripDao.getId())).get().value();
     }
 }

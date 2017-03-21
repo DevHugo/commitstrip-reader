@@ -8,6 +8,7 @@
     <string name="contact">Contact</string>
     <string name="other">Autre</string>
     <string name="strips">Les Strips</string>
+    <string name="activity_cache_strips">strips</string>
     <string name="readFromTheBeginning">Lecture depuis 0</string>
     <string name="drawer_open">Ouverture du menu</string>
     <string name="drawer_close">Fermer le menu</string>
@@ -20,5 +21,39 @@
     <string name="pref_summary_should_use_volume_key">Utiliser les touches de volume pour naviguer entre les strips.</string>
     <string name="pref_title_should_receive_notification">Être notifié pour chaque strip publié</string>
     <string name="pref_summary_should_receive_notification">Lors de la publication d\'un strip sur le site commitstrip.com, m\'avertir par une notification sur mon téléphone</string>
+    <string name="see">Voir</string>
+    <string name="display">Afficher</string>
+    <string name="liststrip">Liste des strips</string>
+    <string name="app_intro">Tutoriel</string>
+    <string name="title_tutorial">Bienvenue</string>
+    <string name="description_tutorial">Prenons quelques secondes afin de configurer l\'application</string>
+    <string name="title_permission">Demande d\'autorisation pour l\'écriture sur la carte SD</string>
+    <string name="description_permission">Nous avons besoin de cette permission afin de proposer un cache offline</string>
+    <string name="title_synchronize">Préparation des strips</string>
+    <string name="description_synchronize">Encore une petite seconde lors de la synchronisation du téléphone avec le serveur</string>
+    <string name="predictive_analyst">Téléchargement des strips en avance</string>
+    <string name="button_downloadstripbeforeuse">Téléchargement des strips en avance</string>
+    <string name="button_dontdownloadstripbeforeuse"><![CDATA[Ne PAS télécharger les strips en avance]]></string>
+    <string name="title_should_download_strip">Téléchargement des strips</string>
+    <string name="share">Partager</string>
+    <string name="fullscreen">Plein Écran</string>
+    <string name="share_content_title">Partager le strip</string>
+    <string name="error_add_favorite">Le strip n\'a pas pu être ajouté en favori</string>
+    <string name="file_size">Taille du fichier en bytes : </string>
+    <string name="pref_title_compress_image">Taux de compression des images</string>
+    <string name="pref_summary_compress_image">Attention: uniquement les nouvelles images seront impactées</string>
+    <string name="clearCache">Effacer le cache</string>
+    <string name="validate">Valider</string>
+    <string name="activity_cache_schedule_download_ok">Téléchargement des strips programmés</string>
+    <string name="activity_cache_delete_cache">Cache supprimé</string>
+    <string name="drawer_cache">Gestion du cache</string>
+    <string name="no_internet_connexion">Pas de connexion internet</string>
+    <string name="description_no_internet_connexion">Vous devez être connecté à internet lors du premier lancement de l\'application</string>
+    <string name="offline">Télécharger uniquement</string>
+    <string name="activity_base_explain_offline">Mode hors ligne activé.</string>
+    <string name="cancel">Annuler</string>
+    <string name="activity_cache_title_alert_download_now">Option de téléchargement</string>
+    <string name="activity_cache_message_alert_download">Voulez vous télécharger les strips immédiatement ?</string>
+    <string name="activity_cache_progress_message">Téléchargement des strips en cours</string>
 
 </resources>

@@ -10,20 +10,19 @@ import io.reactivex.functions.Function;
 
 public class ListStripDaoToListStripDto implements Function<Iterable<StripDaoEntity>, Iterable<StripDto>> {
 
-    private String TAG = "ListStripDaoToListStripDto";
+  @Override
+  public Iterable<StripDto> apply(Iterable<StripDaoEntity> source) {
 
-    @Override
-    public Iterable<StripDto> apply(Iterable<StripDaoEntity> source) {
+    if (source == null)
+        throw new IllegalArgumentException();
 
-        if (source == null)
-            throw new IllegalArgumentException();
+    List<StripDto> strips = new ArrayList<>();
 
-        List<StripDto> strips = new ArrayList();
-
-        StripDaoToStripDto converter = new StripDaoToStripDto();
-        for (StripDaoEntity strip : source) {
-            strips.add(converter.apply(strip));
-        }
-        return strips;
+    StripDaoToStripDto converter = new StripDaoToStripDto();
+    for (StripDaoEntity strip : source) {
+        strips.add(converter.apply(strip));
     }
+
+    return strips;
+  }
 }

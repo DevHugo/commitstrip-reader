@@ -3,14 +3,19 @@
     android:layout_height="wrap_content"
     android:layout_width="wrap_content">
 
+        <com.commitstrip.commitstripreader.settings.CompressPreference
+            android:summary="@string/pref_summary_compress_image"
+            android:title="@string/pref_title_compress_image"
+            android:key="COMPRESSION_IMAGE" />
+
         <CheckBoxPreference
-            android:key="use_volume_key"
+            android:key="USE_VOLUME_KEY"
             android:title="@string/pref_title_should_use_volume_key"
             android:summary="@string/pref_summary_should_use_volume_key"
             android:defaultValue="false" />
 
         <CheckBoxPreference
-            android:key="receive_notification"
+            android:key="RECEIVE_NOTIFICATION"
             android:title="@string/pref_title_should_receive_notification"
             android:summary="@string/pref_summary_should_receive_notification"
             android:defaultValue="true" />

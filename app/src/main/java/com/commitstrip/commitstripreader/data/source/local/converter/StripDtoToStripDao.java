@@ -15,7 +15,7 @@ public class StripDtoToStripDao implements Function<StripDto, StripDaoEntity> {
         stripDao.setId(source.getId());
         stripDao.setTitle(source.getTitle());
         stripDao.setContent(source.getContent());
-        stripDao.setDate(source.getDate());
+        stripDao.setReleaseDate(source.getReleaseDate());
         stripDao.setThumbnail(source.getThumbnail());
         stripDao.setUrl(source.getUrl());
         stripDao.setPrevious(source.getPrevious());

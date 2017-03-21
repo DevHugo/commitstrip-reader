@@ -5,5 +5,6 @@ public class Configuration {
 
     public static boolean shouldStartToFetchNewStrip = false;
     public static boolean shouldSentNotification = true;
+    public static boolean firstStripPublished = true;
 
 }

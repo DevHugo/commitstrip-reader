@@ -2,6 +2,7 @@ package com.commitstrip.commitstripreader.listfavorite;
 
 import android.util.Log;
 
+import com.commitstrip.commitstripreader.common.dto.DisplayStripDto;
 import com.commitstrip.commitstripreader.data.source.StripRepository;
 
 import java.lang.ref.SoftReference;
@@ -9,7 +10,6 @@ import java.lang.ref.SoftReference;
 import javax.inject.Inject;
 
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.observers.DisposableObserver;
 import io.reactivex.subscribers.DisposableSubscriber;
 
 /**
@@ -26,7 +26,7 @@ import io.reactivex.subscribers.DisposableSubscriber;
  **/
 public class ListFavoritePresenter implements ListFavoriteContract.Presenter {
 
-    private final CompositeDisposable mSubscriptions;
+    private CompositeDisposable mSubscriptions;
 
     private ListFavoriteContract.View mListFavoriteView;
     private final StripRepository mStripRepository;
@@ -40,12 +40,11 @@ public class ListFavoritePresenter implements ListFavoriteContract.Presenter {
         mStripRepository = stripRepository;
         mListFavoriteView = stripView;
 
-        mSubscriptions = new CompositeDisposable ();
         mListFavoriteView.setPresenter(this);
     }
 
     @Override
-    public void subscribe() {}
+    public void subscribe() { mSubscriptions = new CompositeDisposable (); }
 
     @Override
     public void fetchFavoriteStrip() {
@@ -54,7 +53,7 @@ public class ListFavoritePresenter implements ListFavoriteContract.Presenter {
         );
     }
 
-    public static class FavoriteObserver<T extends com.commitstrip.commitstripreader.listfavorite.ListFavoriteDto> extends DisposableSubscriber<T> {
+    private static class FavoriteObserver<T extends DisplayStripDto> extends DisposableSubscriber<T> {
         private String TAG = "FavoriteObserver";
 
         private SoftReference<ListFavoriteContract.View> mView;
@@ -65,12 +64,12 @@ public class ListFavoritePresenter implements ListFavoriteContract.Presenter {
         }
 
         @Override
-        public void onNext(ListFavoriteDto favorite) {
+        public void onNext(DisplayStripDto favorite) {
 
             ListFavoriteContract.View view = mView.get();
 
             if (view != null) {
-                view.updateListFavorite( favorite);
+                view.updateListFavorite(favorite);
             }
 
             gotResult = true;

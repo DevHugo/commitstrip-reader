@@ -610,13 +610,13 @@ To have your results sorted on a particular property, add a sort URL parameter w
 <div class="content">
 <pre class="highlightjs highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
-Content-Length: 1454
+Content-Length: 1529
 
 {
   "content" : [ {
     "id" : 1,
     "title" : "Mon royaume pour un commit",
-    "date" : "2016-09-30",
+    "releaseDate" : "2016-09-29T22:00:00.000+0000",
     "thumbnail" : "http://www.commitstrip.com/wp-content/uploads/2016/09/HeadlineImageTemplate-1-8.jpg",
     "content" : "https://www.commitstrip.com/wp-content/uploads/2016/09/StripDto-SysAdmin-songeur-650-final.jpg",
     "url" : "http://www.commitstrip.com/fr/2016/09/30/commit-or-die-trying/",
@@ -625,7 +625,7 @@ Content-Length: 1454
   }, {
     "id" : 2,
     "title" : "Pendant ce temps, sur Mars – #10",
-    "date" : "2016-09-28",
+    "releaseDate" : "2016-09-27T22:00:00.000+0000",
     "thumbnail" : "http://www.commitstrip.com/wp-content/uploads/2016/09/HeadlineImageTemplate-1-7.jpg",
     "content" : "https://www.commitstrip.com/wp-content/uploads/2016/09/StripDto-Pendant-ce-temps-sur-Mars-10-650-final.jpg",
     "url" : "http://www.commitstrip.com/fr/2016/09/28/meanwhile-on-mars-10/",
@@ -634,7 +634,7 @@ Content-Length: 1454
   }, {
     "id" : 3,
     "title" : "La guerre invisible",
-    "date" : "2016-09-27",
+    "releaseDate" : "2016-09-26T22:00:00.000+0000",
     "thumbnail" : "http://www.commitstrip.com/wp-content/uploads/2016/09/HeadlineImageTemplate-1-6.jpg",
     "content" : "https://www.commitstrip.com/wp-content/uploads/2016/09/Strip-Attaque-DDOS-650-finalenglish.jpg",
     "url" : "http://www.commitstrip.com/en/2016/09/27/the-invisible-war/",
@@ -657,7 +657,7 @@ Content-Length: 1454
 <h4 id="_example_request_with_sorted_option"><a class="link" href="#_example_request_with_sorted_option">Example request with sorted option</a></h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-bash" data-lang="bash">$ curl 'http://localhost:8080/strip/?sort=title&amp;date.dir=desc' -i</code></pre>
+<pre class="highlightjs highlight"><code class="language-bash" data-lang="bash">$ curl 'http://localhost:8080/strip/?sort=title&amp;releaseDate.dir=desc' -i</code></pre>
 </div>
 </div>
 </div>
@@ -667,13 +667,13 @@ Content-Length: 1454
 <div class="content">
 <pre class="highlightjs highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
-Content-Length: 1616
+Content-Length: 1691
 
 {
   "content" : [ {
     "id" : 3,
     "title" : "La guerre invisible",
-    "date" : "2016-09-27",
+    "releaseDate" : "2016-09-26T22:00:00.000+0000",
     "thumbnail" : "http://www.commitstrip.com/wp-content/uploads/2016/09/HeadlineImageTemplate-1-6.jpg",
     "content" : "https://www.commitstrip.com/wp-content/uploads/2016/09/Strip-Attaque-DDOS-650-finalenglish.jpg",
     "url" : "http://www.commitstrip.com/en/2016/09/27/the-invisible-war/",
@@ -682,7 +682,7 @@ Content-Length: 1616
   }, {
     "id" : 1,
     "title" : "Mon royaume pour un commit",
-    "date" : "2016-09-30",
+    "releaseDate" : "2016-09-29T22:00:00.000+0000",
     "thumbnail" : "http://www.commitstrip.com/wp-content/uploads/2016/09/HeadlineImageTemplate-1-8.jpg",
     "content" : "https://www.commitstrip.com/wp-content/uploads/2016/09/StripDto-SysAdmin-songeur-650-final.jpg",
     "url" : "http://www.commitstrip.com/fr/2016/09/30/commit-or-die-trying/",
@@ -691,7 +691,7 @@ Content-Length: 1616
   }, {
     "id" : 2,
     "title" : "Pendant ce temps, sur Mars – #10",
-    "date" : "2016-09-28",
+    "releaseDate" : "2016-09-27T22:00:00.000+0000",
     "thumbnail" : "http://www.commitstrip.com/wp-content/uploads/2016/09/HeadlineImageTemplate-1-7.jpg",
     "content" : "https://www.commitstrip.com/wp-content/uploads/2016/09/StripDto-Pendant-ce-temps-sur-Mars-10-650-final.jpg",
     "url" : "http://www.commitstrip.com/fr/2016/09/28/meanwhile-on-mars-10/",
@@ -796,12 +796,12 @@ Content-Length: 1616
 <div class="content">
 <pre class="highlightjs highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
-Content-Length: 404
+Content-Length: 429
 
 {
   "id" : 1,
   "title" : "Mon royaume pour un commit",
-  "date" : "2016-09-30",
+  "releaseDate" : "2016-09-29T22:00:00.000+0000",
   "thumbnail" : "http://www.commitstrip.com/wp-content/uploads/2016/09/HeadlineImageTemplate-1-8.jpg",
   "content" : "https://www.commitstrip.com/wp-content/uploads/2016/09/StripDto-SysAdmin-songeur-650-final.jpg",
   "url" : "http://www.commitstrip.com/fr/2016/09/30/commit-or-die-trying/",
@@ -890,12 +890,12 @@ Content-Length: 404
 <div class="content">
 <pre class="highlightjs highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
-Content-Length: 404
+Content-Length: 429
 
 {
   "id" : 1,
   "title" : "Mon royaume pour un commit",
-  "date" : "2016-09-30",
+  "releaseDate" : "2016-09-29T22:00:00.000+0000",
   "thumbnail" : "http://www.commitstrip.com/wp-content/uploads/2016/09/HeadlineImageTemplate-1-8.jpg",
   "content" : "https://www.commitstrip.com/wp-content/uploads/2016/09/StripDto-SysAdmin-songeur-650-final.jpg",
   "url" : "http://www.commitstrip.com/fr/2016/09/30/commit-or-die-trying/",
